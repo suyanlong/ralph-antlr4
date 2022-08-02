@@ -207,7 +207,7 @@ basicLit:
 	NIL_LIT
 	| integer
 	| string_
-	| FLOAT_LIT;
+	;
 
 integer:
 	DECIMAL_LIT
@@ -242,9 +242,7 @@ element: expression | literalValue;
 
 structType: STRUCT L_CURLY (fieldDecl eos)* R_CURLY;
 
-fieldDecl: (
-		identifierList type_
-	) tag = string_?;
+fieldDecl: identifierList type_;
 
 string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
 
@@ -265,7 +263,64 @@ arguments:
 
 methodExpr: nonNamedType DOT IDENTIFIER;
 
-receiverType: type_;
+//----------------------------------------------------------------------------------------------------------------
+//  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
+annotation
+    : ('@' USING '('  ')')?
+    ;
+
+typeType
+    : primitiveType  
+	| structType
+	| interfaceType
+	| txScriptType
+	| assetScriptType
+	| txContractType
+	| contractType
+    ;
+
+structType
+	:
+	;
+
+interfaceType
+	:
+	;
+
+txScriptType
+	:
+	;
+
+assetScriptType
+	:
+	;
+
+txContractType
+	:
+	;
+
+contractType
+	:
+	;
+		
+
+primitiveType
+    : BOOL
+    | I256
+    | BYTE
+    | U256
+    | BYTEVEC
+    | ADDRESS
+    ;
+
+typeArgument
+    : typeType
+    | (EXTENDS  typeType)?
+    ;
+
+typeArguments
+    : '<' typeArgument (',' typeArgument)* '>'
+    ;
 
 eos:
 	SEMI

@@ -21,6 +21,8 @@ IF                     : 'if';
 ELSE                   : 'else';
 FOR                    : 'for';
 WHILE                  : 'while';
+BREAK				   : 'break';
+CONTINUE			   : 'continue';
 
 LET                    : 'let';
 CONST                  : 'const';
@@ -45,6 +47,100 @@ I256                   :'I256';
 U256                   :'U256';
 BYTEVEC                :'ByteVec';
 ADDRESS                :'Address';
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+
+
+//--------------------------------------------------------------------------------------------------
+// §3.11 Separators
+
+LPAREN : '(';
+RPAREN : ')';
+LBRACE : '{';
+RBRACE : '}';
+LBRACK : '[';
+RBRACK : ']';
+SEMI : ';';
+COMMA : ',';
+DOT : '.';
+ELLIPSIS : '...';
+AT : '@';
+COLONCOLON : '::';
+
+POUND: '#';
+
+// §3.12 Operators
+// Operator
+
+//def opByteVecAdd[Unknown: P]: P[Operator] = P("++").map(_ => Concat)
+//def opAdd[Unknown: P]: P[Operator]        = P("+").map(_ => Add)
+//def opSub[Unknown: P]: P[Operator]        = P("-").map(_ => Sub)
+//def opMul[Unknown: P]: P[Operator]        = P("*").map(_ => Mul)
+//def opDiv[Unknown: P]: P[Operator]        = P("/").map(_ => Div)
+//def opMod[Unknown: P]: P[Operator]        = P("%").map(_ => Mod)
+//def opModAdd[Unknown: P]: P[Operator]     = P("⊕" | "`+`").map(_ => ModAdd)
+//def opModSub[Unknown: P]: P[Operator]     = P("⊖" | "`-`").map(_ => ModSub)
+//def opModMul[Unknown: P]: P[Operator]     = P("⊗" | "`*`").map(_ => ModMul)
+//def opSHL[Unknown: P]: P[Operator]        = P("<<").map(_ => SHL)
+//def opSHR[Unknown: P]: P[Operator]        = P(">>").map(_ => SHR)
+//def opBitAnd[Unknown: P]: P[Operator]     = P("&").map(_ => BitAnd)
+//def opXor[Unknown: P]: P[Operator]        = P("^").map(_ => Xor)
+//def opBitOr[Unknown: P]: P[Operator]      = P("|").map(_ => BitOr)
+//def opEq[Unknown: P]: P[TestOperator]     = P("==").map(_ => Eq)
+//def opNe[Unknown: P]: P[TestOperator]     = P("!=").map(_ => Ne)
+//def opLt[Unknown: P]: P[TestOperator]     = P("<").map(_ => Lt)
+//def opLe[Unknown: P]: P[TestOperator]     = P("<=").map(_ => Le)
+//def opGt[Unknown: P]: P[TestOperator]     = P(">").map(_ => Gt)
+//def opGe[Unknown: P]: P[TestOperator]     = P(">=").map(_ => Ge)
+//def opAnd[Unknown: P]: P[LogicalOperator] = P("&&").map(_ => And)
+//def opOr[Unknown: P]: P[LogicalOperator]  = P("||").map(_ => Or)
+//def opNot[Unknown: P]: P[LogicalOperator] = P("!").map(_ => Not)
+
+ASSIGN : '=';
+GT : '>';
+LT : '<';
+BANG : '!';
+TILDE : '~';
+QUESTION : '?';
+COLON : ':';
+ARROW : '->';
+EQUAL : '==';
+LE : '<=';
+GE : '>=';
+NOTEQUAL : '!=';
+AND : '&&';
+OR : '||';
+INC : '++';
+DEC : '--';
+ADD : '+';
+SUB : '-';
+MUL : '*';
+DIV : '/';
+BITAND : '&';
+BITOR : '|';
+CARET : '^';
+MOD : '%';
+//LSHIFT : '<<';
+//RSHIFT : '>>';
+//URSHIFT : '>>>';
+
+ADD_ASSIGN : '+=';
+SUB_ASSIGN : '-=';
+MUL_ASSIGN : '*=';
+DIV_ASSIGN : '/=';
+AND_ASSIGN : '&=';
+OR_ASSIGN : '|=';
+XOR_ASSIGN : '^=';
+MOD_ASSIGN : '%=';
+LSHIFT_ASSIGN : '<<=';
+RSHIFT_ASSIGN : '>>=';
+URSHIFT_ASSIGN : '>>>=';
+
+
+//--------------------------------------------------------------------------------------------------
 
 
 // §3.10.1 Integer Literals
@@ -276,6 +372,7 @@ fragment
 SingleCharacter
 	:	~['\\\r\n]
 	;
+
 // §3.10.5 String Literals
 StringLiteral
 	:	'"' StringCharacters? '"'
@@ -320,90 +417,6 @@ UnicodeEscape
 NullLiteral
 	:	'null'
 	;
-
-// §3.11 Separators
-
-LPAREN : '(';
-RPAREN : ')';
-LBRACE : '{';
-RBRACE : '}';
-LBRACK : '[';
-RBRACK : ']';
-SEMI : ';';
-COMMA : ',';
-DOT : '.';
-ELLIPSIS : '...';
-AT : '@';
-COLONCOLON : '::';
-
-POUND: '#';
-
-// §3.12 Operators
-// Operator
-
-//def opByteVecAdd[Unknown: P]: P[Operator] = P("++").map(_ => Concat)
-//def opAdd[Unknown: P]: P[Operator]        = P("+").map(_ => Add)
-//def opSub[Unknown: P]: P[Operator]        = P("-").map(_ => Sub)
-//def opMul[Unknown: P]: P[Operator]        = P("*").map(_ => Mul)
-//def opDiv[Unknown: P]: P[Operator]        = P("/").map(_ => Div)
-//def opMod[Unknown: P]: P[Operator]        = P("%").map(_ => Mod)
-//def opModAdd[Unknown: P]: P[Operator]     = P("⊕" | "`+`").map(_ => ModAdd)
-//def opModSub[Unknown: P]: P[Operator]     = P("⊖" | "`-`").map(_ => ModSub)
-//def opModMul[Unknown: P]: P[Operator]     = P("⊗" | "`*`").map(_ => ModMul)
-//def opSHL[Unknown: P]: P[Operator]        = P("<<").map(_ => SHL)
-//def opSHR[Unknown: P]: P[Operator]        = P(">>").map(_ => SHR)
-//def opBitAnd[Unknown: P]: P[Operator]     = P("&").map(_ => BitAnd)
-//def opXor[Unknown: P]: P[Operator]        = P("^").map(_ => Xor)
-//def opBitOr[Unknown: P]: P[Operator]      = P("|").map(_ => BitOr)
-//def opEq[Unknown: P]: P[TestOperator]     = P("==").map(_ => Eq)
-//def opNe[Unknown: P]: P[TestOperator]     = P("!=").map(_ => Ne)
-//def opLt[Unknown: P]: P[TestOperator]     = P("<").map(_ => Lt)
-//def opLe[Unknown: P]: P[TestOperator]     = P("<=").map(_ => Le)
-//def opGt[Unknown: P]: P[TestOperator]     = P(">").map(_ => Gt)
-//def opGe[Unknown: P]: P[TestOperator]     = P(">=").map(_ => Ge)
-//def opAnd[Unknown: P]: P[LogicalOperator] = P("&&").map(_ => And)
-//def opOr[Unknown: P]: P[LogicalOperator]  = P("||").map(_ => Or)
-//def opNot[Unknown: P]: P[LogicalOperator] = P("!").map(_ => Not)
-
-ASSIGN : '=';
-GT : '>';
-LT : '<';
-BANG : '!';
-TILDE : '~';
-QUESTION : '?';
-COLON : ':';
-ARROW : '->';
-EQUAL : '==';
-LE : '<=';
-GE : '>=';
-NOTEQUAL : '!=';
-AND : '&&';
-OR : '||';
-INC : '++';
-DEC : '--';
-ADD : '+';
-SUB : '-';
-MUL : '*';
-DIV : '/';
-BITAND : '&';
-BITOR : '|';
-CARET : '^';
-MOD : '%';
-//LSHIFT : '<<';
-//RSHIFT : '>>';
-//URSHIFT : '>>>';
-
-ADD_ASSIGN : '+=';
-SUB_ASSIGN : '-=';
-MUL_ASSIGN : '*=';
-DIV_ASSIGN : '/=';
-AND_ASSIGN : '&=';
-OR_ASSIGN : '|=';
-XOR_ASSIGN : '^=';
-MOD_ASSIGN : '%=';
-LSHIFT_ASSIGN : '<<=';
-RSHIFT_ASSIGN : '>>=';
-URSHIFT_ASSIGN : '>>>=';
 
 // §3.8 Identifiers (must appear after all keywords in the grammar)
 
