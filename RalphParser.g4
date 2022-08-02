@@ -52,7 +52,6 @@ statementList: ((SEMI? | EOS? | {this.closingBracket()}?) statement eos)+;
 
 statement:
 	declaration
-	| labeledStmt
 	| simpleStmt
 	| returnStmt
 	| breakStmt
@@ -70,7 +69,6 @@ simpleStmt:
 	| shortVarDecl;
 
 expressionStmt: expression;
-
 
 incDecStmt: expression (PLUS_PLUS | MINUS_MINUS);
 
@@ -94,19 +92,11 @@ shortVarDecl: identifierList DECLARE_ASSIGN expressionList;
 
 emptyStmt: EOS | SEMI;
 
-labeledStmt: IDENTIFIER COLON statement?;
-
 returnStmt: RETURN expressionList?;
 
 breakStmt: BREAK IDENTIFIER?;
 
 continueStmt: CONTINUE IDENTIFIER?;
-
-gotoStmt: GOTO IDENTIFIER;
-
-fallthroughStmt: FALLTHROUGH;
-
-deferStmt: DEFER expression;
 
 ifStmt:
 	IF ( expression
@@ -116,51 +106,10 @@ ifStmt:
 		ELSE (ifStmt | block)
 	)?;
 
-switchStmt: exprSwitchStmt | typeSwitchStmt;
-
-exprSwitchStmt:
-	SWITCH (expression?
-					| simpleStmt? eos expression?
-					) L_CURLY exprCaseClause* R_CURLY;
-
-exprCaseClause: exprSwitchCase COLON statementList?;
-
-exprSwitchCase: CASE expressionList | DEFAULT;
-
-typeSwitchStmt:
-	SWITCH ( typeSwitchGuard
-					| eos typeSwitchGuard
-					| simpleStmt eos typeSwitchGuard)
-					 L_CURLY typeCaseClause* R_CURLY;
-
-typeSwitchGuard: (IDENTIFIER DECLARE_ASSIGN)? primaryExpr DOT L_PAREN TYPE R_PAREN;
-
-typeCaseClause: typeSwitchCase COLON statementList?;
-
-typeSwitchCase: CASE typeList | DEFAULT;
+forStmt: FOR (expression?) block;
+whileStmt: WHILE (expression?) block;
 
 typeList: (type_ | NIL_LIT) (COMMA (type_ | NIL_LIT))*;
-
-selectStmt: SELECT L_CURLY commClause* R_CURLY;
-
-commClause: commCase COLON statementList?;
-
-commCase: CASE (sendStmt | recvStmt) | DEFAULT;
-
-recvStmt: (expressionList ASSIGN | identifierList DECLARE_ASSIGN)? recvExpr = expression;
-
-forStmt: FOR (expression? | forClause | rangeClause?) block;
-whileStmt: while (expression?) block;
-
-forClause:
-	initStmt = simpleStmt? eos expression? eos postStmt = simpleStmt?;
-
-rangeClause: (
-		expressionList ASSIGN
-		| identifierList DECLARE_ASSIGN
-	)? RANGE expression;
-
-goStmt: GO expression;
 
 type_: typeName | typeLit | L_PAREN type_ R_PAREN;
 
@@ -169,12 +118,10 @@ typeName: qualifiedIdent | IDENTIFIER;
 typeLit:
 	arrayType
 	| structType
-	| pointerType
 	| functionType
 	| interfaceType
 	| sliceType
-	| mapType
-	| channelType;
+	;
 
 arrayType: L_BRACKET arrayLength R_BRACKET elementType;
 
@@ -182,17 +129,10 @@ arrayLength: expression;
 
 elementType: type_;
 
-pointerType: STAR type_;
-
 interfaceType:
 	INTERFACE L_CURLY ((methodSpec | typeName) eos)* R_CURLY;
 
 sliceType: L_BRACKET R_BRACKET elementType;
-
-// It's possible to replace `type` with more restricted typeLit list and also pay attention to nil maps
-mapType: MAP L_BRACKET type_ R_BRACKET elementType;
-
-channelType: (CHAN | CHAN RECEIVE | RECEIVE CHAN) elementType;
 
 methodSpec:
 	IDENTIFIER parameters result
@@ -251,7 +191,6 @@ primaryExpr:
 		(DOT IDENTIFIER)
 		| index
 		| slice_
-		| typeAssertion
 		| arguments
 	);
 
@@ -289,7 +228,6 @@ literalType:
 	| arrayType
 	| L_BRACKET ELLIPSIS R_BRACKET elementType
 	| sliceType
-	| mapType
 	| typeName;
 
 literalValue: L_CURLY (elementList COMMA?)? R_CURLY;
@@ -306,12 +244,9 @@ structType: STRUCT L_CURLY (fieldDecl eos)* R_CURLY;
 
 fieldDecl: (
 		identifierList type_
-		| embeddedField
 	) tag = string_?;
 
 string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
-
-embeddedField: STAR? typeName;
 
 functionLit: FN signature block; // function
 
@@ -323,16 +258,12 @@ slice_:
 		| expression? COLON expression COLON expression
 	) R_BRACKET;
 
-typeAssertion: DOT L_PAREN type_ R_PAREN;
-
 arguments:
 	L_PAREN (
 		(expressionList | nonNamedType (COMMA expressionList)?) ELLIPSIS? COMMA?
 	)? R_PAREN;
 
 methodExpr: nonNamedType DOT IDENTIFIER;
-
-//receiverType: typeName | '(' ('*' typeName | receiverType) ')';
 
 receiverType: type_;
 
