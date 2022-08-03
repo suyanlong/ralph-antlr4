@@ -4,25 +4,31 @@ lexer grammar RalphLexer;
 // src/main/scala/org/alephium/protocol/vm/lang/Lexer.scala
 // Keywords
 IMPORT                 : 'import';
+PACKAGE                : 'package';
 FN                     : 'fn';
 PUB                    : 'pub';
 PAYABLE                : 'payable';
-RETURN                 : 'return';
+RETURN                 : 'return' -> mode(NLSEMI);
 
 INTERFACE              : 'Interface';
 STRUCT                 : 'struct';
 ENUM                   : 'enum';
-TxScript               : 'TxScript';
-TxContract             : 'TxContract';
-Contract               : 'Contract';
-AssetScript            : 'AssetScript';
+TXSCRIPT               : 'TxScript';
+TXCONTRACT             : 'TxContract';
+CONTRACT               : 'Contract';
+ASSETSCRIPT            : 'AssetScript';
 
 IF                     : 'if';
 ELSE                   : 'else';
 FOR                    : 'for';
 WHILE                  : 'while';
-BREAK				   : 'break';
-CONTINUE			   : 'continue';
+BREAK                  : 'break' -> mode(NLSEMI);
+CONTINUE               : 'continue' -> mode(NLSEMI);
+DEFAULT                : 'default';
+GOTO                   : 'goto';
+SWITCH                 : 'switch';
+CASE                   : 'case';
+TYPE                   : 'type';
 
 LET                    : 'let';
 CONST                  : 'const';
@@ -38,9 +44,9 @@ IMPLEMENTS             :'implements';
 EVENT                  :'event';
 EVMIT                  :'emit';
 
-USING                  :'using';
 //@using|using
-
+USING                  :'using';
+AT                     :'@';
 //type
 BOOL                   :'Bool';
 I256                   :'I256';
@@ -49,31 +55,28 @@ BYTEVEC                :'ByteVec';
 ADDRESS                :'Address';
 
 
-//--------------------------------------------------------------------------------------------------
+
+IDENTIFIER             : LETTER (LETTER | UNICODE_DIGIT)* -> mode(NLSEMI);
+
+// Punctuation
+
+L_PAREN                : '(';
+R_PAREN                : ')' -> mode(NLSEMI);
+L_CURLY                : '{';
+R_CURLY                : '}' -> mode(NLSEMI);
+L_BRACKET              : '[';
+R_BRACKET              : ']' -> mode(NLSEMI);
+ASSIGN                 : '=';
+COMMA                  : ',';
+SEMI                   : ';';
+COLON                  : ':';
+DOT                    : '.';
+PLUS_PLUS              : '++' -> mode(NLSEMI);
+MINUS_MINUS            : '--' -> mode(NLSEMI);
+DECLARE_ASSIGN         : ':=';
+ELLIPSIS               : '...';
 
 
-
-
-//--------------------------------------------------------------------------------------------------
-// §3.11 Separators
-
-LPAREN : '(';
-RPAREN : ')';
-LBRACE : '{';
-RBRACE : '}';
-LBRACK : '[';
-RBRACK : ']';
-SEMI : ';';
-COMMA : ',';
-DOT : '.';
-ELLIPSIS : '...';
-AT : '@';
-COLONCOLON : '::';
-
-POUND: '#';
-
-// §3.12 Operators
-// Operator
 
 //def opByteVecAdd[Unknown: P]: P[Operator] = P("++").map(_ => Concat)
 //def opAdd[Unknown: P]: P[Operator]        = P("+").map(_ => Add)
@@ -99,364 +102,138 @@ POUND: '#';
 //def opOr[Unknown: P]: P[LogicalOperator]  = P("||").map(_ => Or)
 //def opNot[Unknown: P]: P[LogicalOperator] = P("!").map(_ => Not)
 
-ASSIGN : '=';
-GT : '>';
-LT : '<';
-BANG : '!';
-TILDE : '~';
-QUESTION : '?';
-COLON : ':';
-ARROW : '->';
-EQUAL : '==';
-LE : '<=';
-GE : '>=';
-NOTEQUAL : '!=';
-AND : '&&';
-OR : '||';
-INC : '++';
-DEC : '--';
-ADD : '+';
-SUB : '-';
-MUL : '*';
-DIV : '/';
-BITAND : '&';
-BITOR : '|';
-CARET : '^';
-MOD : '%';
-//LSHIFT : '<<';
-//RSHIFT : '>>';
-//URSHIFT : '>>>';
 
-ADD_ASSIGN : '+=';
-SUB_ASSIGN : '-=';
-MUL_ASSIGN : '*=';
-DIV_ASSIGN : '/=';
-AND_ASSIGN : '&=';
-OR_ASSIGN : '|=';
-XOR_ASSIGN : '^=';
-MOD_ASSIGN : '%=';
-LSHIFT_ASSIGN : '<<=';
-RSHIFT_ASSIGN : '>>=';
-URSHIFT_ASSIGN : '>>>=';
+// Logical
+
+LOGICAL_OR             : '||';
+LOGICAL_AND            : '&&';
+
+// Relation operators
+
+EQUALS                 : '==';
+NOT_EQUALS             : '!=';
+LESS                   : '<';
+LESS_OR_EQUALS         : '<=';
+GREATER                : '>';
+GREATER_OR_EQUALS      : '>=';
+
+// Arithmetic operators
+
+OR                     : '|';
+DIV                    : '/';
+MOD                    : '%';
+LSHIFT                 : '<<';
+RSHIFT                 : '>>';
+BIT_CLEAR              : '&^';
+
+// Unary operators
+
+EXCLAMATION            : '!';
+
+// Mixed operators
+
+PLUS                   : '+';
+MINUS                  : '-';
+CARET                  : '^';
+STAR                   : '*';
+AMPERSAND              : '&';
+RECEIVE                : '<-';
+
+// Number literals
+
+DECIMAL_LIT            : ('0' | [1-9] ('_'? [0-9])*) -> mode(NLSEMI);
+BINARY_LIT             : '0' [bB] ('_'? BIN_DIGIT)+ -> mode(NLSEMI);
+OCTAL_LIT              : '0' [oO]? ('_'? OCTAL_DIGIT)+ -> mode(NLSEMI);
+HEX_LIT                : '0' [xX]  ('_'? HEX_DIGIT)+ -> mode(NLSEMI);
 
 
-//--------------------------------------------------------------------------------------------------
+FLOAT_LIT : (DECIMAL_FLOAT_LIT | HEX_FLOAT_LIT) -> mode(NLSEMI);
+
+DECIMAL_FLOAT_LIT      : DECIMALS ('.' DECIMALS? EXPONENT? | EXPONENT)
+                       | '.' DECIMALS EXPONENT?
+                       ;
+
+HEX_FLOAT_LIT          : '0' [xX] HEX_MANTISSA HEX_EXPONENT
+                       ;
+
+fragment HEX_MANTISSA  : ('_'? HEX_DIGIT)+ ('.' ( '_'? HEX_DIGIT )*)?
+                       | '.' HEX_DIGIT ('_'? HEX_DIGIT)*;
+
+fragment HEX_EXPONENT  : [pP] [+-]? DECIMALS;
 
 
-// §3.10.1 Integer Literals
+IMAGINARY_LIT          : (DECIMAL_LIT | BINARY_LIT |  OCTAL_LIT | HEX_LIT | FLOAT_LIT) 'i' -> mode(NLSEMI);
 
-IntegerLiteral
-	:	DecimalIntegerLiteral
-	|	HexIntegerLiteral
-	|	OctalIntegerLiteral
-	|	BinaryIntegerLiteral
-	;
+// Rune literals
 
-fragment
-DecimalIntegerLiteral
-	:	DecimalNumeral IntegerTypeSuffix?
-	;
+fragment RUNE               : '\'' (UNICODE_VALUE | BYTE_VALUE) '\'';//: '\'' (~[\n\\] | ESCAPED_VALUE) '\'';
 
-fragment
-HexIntegerLiteral
-	:	HexNumeral IntegerTypeSuffix?
-	;
+RUNE_LIT                : RUNE -> mode(NLSEMI);
 
-fragment
-OctalIntegerLiteral
-	:	OctalNumeral IntegerTypeSuffix?
-	;
 
-fragment
-BinaryIntegerLiteral
-	:	BinaryNumeral IntegerTypeSuffix?
-	;
 
-fragment
-IntegerTypeSuffix
-	:	[lL]
-	;
+BYTE_VALUE : OCTAL_BYTE_VALUE | HEX_BYTE_VALUE;
 
-fragment
-DecimalNumeral
-	:	'0'
-	|	NonZeroDigit (Digits? | Underscores Digits)
-	;
+OCTAL_BYTE_VALUE: '\\' OCTAL_DIGIT OCTAL_DIGIT OCTAL_DIGIT;
 
-fragment
-Digits
-	:	Digit (DigitsAndUnderscores? Digit)?
-	;
+HEX_BYTE_VALUE: '\\' 'x'  HEX_DIGIT HEX_DIGIT;
 
-fragment
-Digit
-	:	'0'
-	|	NonZeroDigit
-	;
+LITTLE_U_VALUE: '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT;
 
-fragment
-NonZeroDigit
-	:	[1-9]
-	;
+BIG_U_VALUE: '\\' 'U' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT;
 
-fragment
-DigitsAndUnderscores
-	:	DigitOrUnderscore+
-	;
+// String literals
 
-fragment
-DigitOrUnderscore
-	:	Digit
-	|	'_'
-	;
+RAW_STRING_LIT         : '`' ~'`'*                      '`' -> mode(NLSEMI);
+INTERPRETED_STRING_LIT : '"' (~["\\] | ESCAPED_VALUE)*  '"' -> mode(NLSEMI);
+// Hidden tokens
+WS                     : [ \t]+             -> channel(HIDDEN);
+COMMENT                : '/*' .*? '*/'      -> channel(HIDDEN);
+TERMINATOR             : [\r\n]+            -> channel(HIDDEN);
+LINE_COMMENT           : '//' ~[\r\n]*      -> channel(HIDDEN);
 
-fragment
-Underscores
-	:	'_'+
-	;
-
-fragment
-HexNumeral
-	:	'0' [xX] HexDigits
-	;
-
-fragment
-HexDigits
-	:	HexDigit (HexDigitsAndUnderscores? HexDigit)?
-	;
-
-fragment
-HexDigit
-	:	[0-9a-fA-F]
-	;
-
-fragment
-HexDigitsAndUnderscores
-	:	HexDigitOrUnderscore+
-	;
-
-fragment
-HexDigitOrUnderscore
-	:	HexDigit
-	|	'_'
-	;
-
-fragment
-OctalNumeral
-	:	'0' Underscores? OctalDigits
-	;
-
-fragment
-OctalDigits
-	:	OctalDigit (OctalDigitsAndUnderscores? OctalDigit)?
-	;
-
-fragment
-OctalDigit
-	:	[0-7]
-	;
-
-fragment
-OctalDigitsAndUnderscores
-	:	OctalDigitOrUnderscore+
-	;
-
-fragment
-OctalDigitOrUnderscore
-	:	OctalDigit
-	|	'_'
-	;
-
-fragment
-BinaryNumeral
-	:	'0' [bB] BinaryDigits
-	;
-
-fragment
-BinaryDigits
-	:	BinaryDigit (BinaryDigitsAndUnderscores? BinaryDigit)?
-	;
-
-fragment
-BinaryDigit
-	:	[01]
-	;
-
-fragment
-BinaryDigitsAndUnderscores
-	:	BinaryDigitOrUnderscore+
-	;
-
-fragment
-BinaryDigitOrUnderscore
-	:	BinaryDigit
-	|	'_'
-	;
-
-// §3.10.2 Floating-Point Literals
-
-FloatingPointLiteral
-	:	DecimalFloatingPointLiteral
-	|	HexadecimalFloatingPointLiteral
-	;
-
-fragment
-DecimalFloatingPointLiteral
-	:	Digits '.' Digits? ExponentPart? FloatTypeSuffix?
-	|	'.' Digits ExponentPart? FloatTypeSuffix?
-	|	Digits ExponentPart FloatTypeSuffix?
-	|	Digits FloatTypeSuffix
-	;
-
-fragment
-ExponentPart
-	:	ExponentIndicator SignedInteger
-	;
-
-fragment
-ExponentIndicator
-	:	[eE]
-	;
-
-fragment
-SignedInteger
-	:	Sign? Digits
-	;
-
-fragment
-Sign
-	:	[+-]
-	;
-
-fragment
-FloatTypeSuffix
-	:	[fFdD]
-	;
-
-fragment
-HexadecimalFloatingPointLiteral
-	:	HexSignificand BinaryExponent FloatTypeSuffix?
-	;
-
-fragment
-HexSignificand
-	:	HexNumeral '.'?
-	|	'0' [xX] HexDigits? '.' HexDigits
-	;
-
-fragment
-BinaryExponent
-	:	BinaryExponentIndicator SignedInteger
-	;
-
-fragment
-BinaryExponentIndicator
-	:	[pP]
-	;
-
-// §3.10.3 Boolean Literals
-
-BooleanLiteral
-	:	'true'
-	|	'false'
-	;
-
-// §3.10.4 Character Literals
-
-CharacterLiteral
-	:	'\'' SingleCharacter '\''
-	|	'\'' EscapeSequence '\''
-	;
-
-fragment
-SingleCharacter
-	:	~['\\\r\n]
-	;
-
-// §3.10.5 String Literals
-StringLiteral
-	:	'"' StringCharacters? '"'
-	;
-fragment
-StringCharacters
-	:	StringCharacter+
-	;
-fragment
-StringCharacter
-	:	~["\\\r\n]
-	|	EscapeSequence
-	;
-// §3.10.6 Escape Sequences for Character and String Literals
-fragment
-EscapeSequence
-	:	'\\' [btnfr"'\\]
-	|	OctalEscape
-    |   UnicodeEscape // This is not in the spec but prevents having to preprocess the input
-	;
-
-fragment
-OctalEscape
-	:	'\\' OctalDigit
-	|	'\\' OctalDigit OctalDigit
-	|	'\\' ZeroToThree OctalDigit OctalDigit
-	;
-
-fragment
-ZeroToThree
-	:	[0-3]
-	;
-
-// This is not in the spec but prevents having to preprocess the input
-fragment
-UnicodeEscape
-    :   '\\' 'u'+ HexDigit HexDigit HexDigit HexDigit
+fragment UNICODE_VALUE: ~[\r\n'] | LITTLE_U_VALUE | BIG_U_VALUE | ESCAPED_VALUE;
+// Fragments
+fragment ESCAPED_VALUE
+    : '\\' ('u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT
+           | 'U' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT
+           | [abfnrtv\\'"]
+           | OCTAL_DIGIT OCTAL_DIGIT OCTAL_DIGIT
+           | 'x' HEX_DIGIT HEX_DIGIT)
     ;
-
-// §3.10.7 The Null Literal
-
-NullLiteral
-	:	'null'
-	;
-
-// §3.8 Identifiers (must appear after all keywords in the grammar)
-
-Identifier
-	:	RalphLetter RalphLetterOrDigit*
-	;
-
-fragment
-RalphLetter
-	:	[a-zA-Z$_] // these are the "Ralph letters" below 0x7F
-	|	// covers all characters above 0x7F which are not a surrogate
-		~[\u0000-\u007F\uD800-\uDBFF]
-		{ Check1() }?
-	|	// covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
-		[\uD800-\uDBFF] [\uDC00-\uDFFF]
-		{ Check2() }?
-	;
-
-fragment
-RalphLetterOrDigit
-	:	[a-zA-Z0-9$_] // these are the "Ralph letters or digits" below 0x7F
-	|	// covers all characters above 0x7F which are not a surrogate
-		~[\u0000-\u007F\uD800-\uDBFF]
-		{ Check3() }?
-	|	// covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
-		[\uD800-\uDBFF] [\uDC00-\uDFFF]
-		{ Check4() }?
-	;
-
-//
-// Whitespace and comments
-//
-
-WS  :  [ \t\r\n\u000C]+ -> skip
+fragment DECIMALS
+    : [0-9] ('_'? [0-9])*
     ;
-
-COMMENT
-    :   '/*' .*? '*/' -> channel(HIDDEN)
+fragment OCTAL_DIGIT
+    : [0-7]
     ;
-
-LINE_COMMENT
-    :   '//' ~[\r\n]* -> channel(HIDDEN)
+fragment HEX_DIGIT
+    : [0-9a-fA-F]
     ;
+fragment BIN_DIGIT
+    : [01]
+    ;
+fragment EXPONENT
+    : [eE] [+-]? DECIMALS
+    ;
+fragment LETTER
+    : UNICODE_LETTER
+    | '_'
+    ;
+fragment UNICODE_DIGIT
+    : [\p{Nd}]
+    ;
+fragment UNICODE_LETTER
+    : [\p{L}]
+    ;
+mode NLSEMI;
+// Treat whitespace as normal
+WS_NLSEMI                     : [ \t]+             -> channel(HIDDEN);
+// Ignore any comments that only span one line
+COMMENT_NLSEMI                : '/*' ~[\r\n]*? '*/'      -> channel(HIDDEN);
+LINE_COMMENT_NLSEMI : '//' ~[\r\n]*      -> channel(HIDDEN);
+// Emit an EOS token for any newlines, semicolon, multiline comments or the EOF and
+//return to normal lexing
+EOS:              ([\r\n]+ | ';' | '/*' .*? '*/' | EOF)            -> mode(DEFAULT_MODE);
+// Did not find an EOS, so go back to normal lexing
+OTHER: -> mode(DEFAULT_MODE), channel(HIDDEN);

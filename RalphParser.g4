@@ -5,12 +5,9 @@ options
    tokenVocab = RalphLexer;
 }
 
+sourceFile:(importDecl eos)* (declaration eos)* EOF;
 
-sourceFile:
-	(importDecl eos)* (
-		(functionDecl | methodDecl | declaration) eos
-	)* EOF;
-
+//import------------------------------------------------------
 importDecl:
 	IMPORT (importSpec | L_PAREN (importSpec eos)* R_PAREN);
 
@@ -18,33 +15,242 @@ importSpec: alias = (DOT | IDENTIFIER)? importPath;
 
 importPath: string_;
 
-declaration: constDecl | typeDecl | varDecl;
+//import------------------------------------------------------
 
+declaration: constDecl | typeDecl | varDecl;
+identifierList: IDENTIFIER (COMMA IDENTIFIER)*;
+
+//var--------------------------------------------------------
 constDecl: CONST (constSpec | L_PAREN (constSpec eos)* R_PAREN);
 
 constSpec: identifierList (type_? ASSIGN expressionList)?;
 
-identifierList: IDENTIFIER (COMMA IDENTIFIER)*;
-
-expressionList: expression (COMMA expression)*;
-
-typeDecl: TYPE (typeSpec | L_PAREN (typeSpec eos)* R_PAREN);
-
-typeSpec: IDENTIFIER ASSIGN? type_;
-
-// Function declarations
-
-functionDecl: FN IDENTIFIER (signature block?);
-
-methodDecl: FN IDENTIFIER ( signature block?);
-
-varDecl: VAR (varSpec | L_PAREN (varSpec eos)* R_PAREN);
+varDecl: LET MUT? (varSpec | L_PAREN (varSpec eos)* R_PAREN);
 
 varSpec:
 	identifierList (
 		type_ (ASSIGN expressionList)?
 		| ASSIGN expressionList
 	);
+
+//var--------------------------------------------------------
+
+
+//expression--------------------------------------------------------
+
+expression:
+	primaryExpr
+	| unary_op = (
+		PLUS
+		| MINUS
+		| EXCLAMATION
+		| CARET
+		| STAR
+		| AMPERSAND
+		| RECEIVE
+	) expression
+	| expression mul_op = (
+		STAR
+		| DIV
+		| MOD
+		| LSHIFT
+		| RSHIFT
+		| AMPERSAND
+		| BIT_CLEAR
+	) expression
+	| expression add_op = (PLUS | MINUS | OR | CARET) expression
+	| expression rel_op = (
+		EQUALS
+		| NOT_EQUALS
+		| LESS
+		| LESS_OR_EQUALS
+		| GREATER
+		| GREATER_OR_EQUALS
+	) expression
+	| expression LOGICAL_AND expression
+	| expression LOGICAL_OR expression;
+
+expressionList: expression (COMMA expression)*;
+
+primaryExpr
+	: operand
+	| conversion
+	| methodExpr
+	| primaryExpr (
+		(DOT IDENTIFIER)
+		| index
+		| slice_
+		| arguments
+	);
+
+conversion: nonNamedType L_PAREN expression COMMA? R_PAREN;
+
+methodExpr: nonNamedType DOT IDENTIFIER;
+
+//expression--------------------------------------------------------
+
+//type--------------------------------------------------------
+
+primitiveType
+    : BOOL
+    | I256
+    | BYTE
+    | U256
+    | BYTEVEC
+    | ADDRESS
+    ;
+
+typeDecl: TYPE (typeSpec | L_PAREN (typeSpec eos)* R_PAREN);
+
+typeSpec: IDENTIFIER ASSIGN? type_;
+
+typeList: (type_) (COMMA (type_))*;
+
+type_: typeName | typeLit | L_PAREN type_ R_PAREN;
+
+typeName: qualifiedIdent | IDENTIFIER;
+
+typeLit
+    : primitiveType  
+	| arrayType
+	| structType
+	| functionType
+	| sliceType
+	| interfaceType
+	| txScriptType
+	| assetScriptType
+	| txContractType
+	| contractType
+	;
+
+arrayType: L_BRACKET arrayLength elementType R_BRACKET;
+
+arrayLength: expression;
+
+elementType: type_;
+
+functionType: PUB? FN PAYABLE? signature;
+
+signature: parameters ( '->' result)?;
+
+result
+	: L_PAREN R_PAREN
+    | type_
+    | L_PAREN (type_ (COMMA type_)* COMMA?)? R_PAREN
+    ;
+
+parameters:
+	L_PAREN (parameterDecl (COMMA parameterDecl)* COMMA?)? R_PAREN;
+
+parameterDecl: identifierList? ELLIPSIS? type_;
+
+nonNamedType: typeLit | L_PAREN nonNamedType R_PAREN;
+
+operand: literal | IDENTIFIER | L_PAREN expression R_PAREN;
+
+literal: basicLit ;
+
+basicLit
+	: integer
+	| string_
+	;
+
+integer
+	: DECIMAL_LIT
+	| BINARY_LIT
+	| OCTAL_LIT
+	| HEX_LIT
+	| IMAGINARY_LIT
+	| RUNE_LIT;
+
+qualifiedIdent: IDENTIFIER DOT IDENTIFIER;
+
+fieldDecl: LET? MUT? identifierList COLON type_;
+
+string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
+
+index: L_BRACKET expression R_BRACKET;
+
+slice_
+	:L_BRACKET (
+		  expression? COLON expression?
+		| expression? COLON expression COLON expression
+	) R_BRACKET;
+
+arguments
+	: L_PAREN (
+		( expressionList 
+		| nonNamedType (COMMA expressionList)?
+		) ELLIPSIS? COMMA?
+	  )? R_PAREN
+	;
+
+sliceType: L_BRACKET R_BRACKET elementType;
+
+structType: STRUCT IDENTIFIER L_CURLY (fieldDecl eos)* R_CURLY;
+
+// Function declarations
+methodDecl: PUB? FN PAYABLE? IDENTIFIER ( signature block?);
+
+//method 
+methodSpec: PUB? FN PAYABLE? IDENTIFIER signature;
+
+interfaceType:
+	INTERFACE IDENTIFIER L_CURLY ((methodSpec | typeName) eos)* R_CURLY;
+
+txScriptType
+	: 
+	;
+
+assetScriptType
+	:
+	;
+
+txContractType
+	: TXCONTRACT IDENTIFIER (L_CURLY (fieldDecl eos)* R_CURLY)?(L_PAREN (fieldDecl eos)* R_PAREN)? (EXTENDS | IMPLEMENTS) 
+	; 
+
+
+structBody
+	: 
+	;
+
+contractType
+	: 
+	;
+
+defArgument
+    : typeLit
+    | (EXTENDS  typeLit)?
+    ;
+
+typeArguments
+    : '<' typeArgument (',' typeArgument)* '>'
+    ;
+
+
+//  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
+annotation
+    : (AT USING L_PAREN varAssignParamList R_PAREN)?
+    ;
+
+varAssignParamList
+    : assign (','assign)*
+    ;
+
+assign
+    : (IDENTIFIER | varParamList) ASSIGN expressionStmt
+    ;
+
+varParamList
+    : L_PAREN IDENTIFIER (',' IDENTIFIER)* R_PAREN
+    ;
+
+
+//type--------------------------------------------------------
+
+
+//stmt--------------------------------------------------------
 
 block: L_CURLY statementList? R_CURLY;
 
@@ -62,7 +268,8 @@ statement:
 	| whileStmt
 	;
 
-simpleStmt:
+simpleStmt
+	: emptyStmt
 	| incDecStmt
 	| assignment
 	| expressionStmt
@@ -107,221 +314,13 @@ ifStmt:
 	)?;
 
 forStmt: FOR (expression?) block;
+
 whileStmt: WHILE (expression?) block;
 
-typeList: (type_ | NIL_LIT) (COMMA (type_ | NIL_LIT))*;
-
-type_: typeName | typeLit | L_PAREN type_ R_PAREN;
-
-typeName: qualifiedIdent | IDENTIFIER;
-
-typeLit:
-	arrayType
-	| structType
-	| functionType
-	| interfaceType
-	| sliceType
-	;
-
-arrayType: L_BRACKET arrayLength R_BRACKET elementType;
-
-arrayLength: expression;
-
-elementType: type_;
-
-interfaceType:
-	INTERFACE L_CURLY ((methodSpec | typeName) eos)* R_CURLY;
-
-sliceType: L_BRACKET R_BRACKET elementType;
-
-methodSpec:
-	IDENTIFIER parameters result
-	| IDENTIFIER parameters;
-
-functionType: FN signature;
-
-signature:
-	parameters result
-	| parameters;
-
-result: parameters | type_;
-
-parameters:
-	L_PAREN (parameterDecl (COMMA parameterDecl)* COMMA?)? R_PAREN;
-
-parameterDecl: identifierList? ELLIPSIS? type_;
-
-expression:
-	primaryExpr
-	| unary_op = (
-		PLUS
-		| MINUS
-		| EXCLAMATION
-		| CARET
-		| STAR
-		| AMPERSAND
-		| RECEIVE
-	) expression
-	| expression mul_op = (
-		STAR
-		| DIV
-		| MOD
-		| LSHIFT
-		| RSHIFT
-		| AMPERSAND
-		| BIT_CLEAR
-	) expression
-	| expression add_op = (PLUS | MINUS | OR | CARET) expression
-	| expression rel_op = (
-		EQUALS
-		| NOT_EQUALS
-		| LESS
-		| LESS_OR_EQUALS
-		| GREATER
-		| GREATER_OR_EQUALS
-	) expression
-	| expression LOGICAL_AND expression
-	| expression LOGICAL_OR expression;
-
-primaryExpr:
-	operand
-	| conversion
-	| methodExpr
-	| primaryExpr (
-		(DOT IDENTIFIER)
-		| index
-		| slice_
-		| arguments
-	);
+//stmt--------------------------------------------------------
 
 
-conversion: nonNamedType L_PAREN expression COMMA? R_PAREN;
-
-nonNamedType: typeLit | L_PAREN nonNamedType R_PAREN;
-
-operand: literal | operandName | L_PAREN expression R_PAREN;
-
-literal: basicLit | compositeLit | functionLit;
-
-basicLit:
-	NIL_LIT
-	| integer
-	| string_
-	;
-
-integer:
-	DECIMAL_LIT
-	| BINARY_LIT
-	| OCTAL_LIT
-	| HEX_LIT
-	| IMAGINARY_LIT
-	| RUNE_LIT;
-
-operandName: IDENTIFIER;
-
-qualifiedIdent: IDENTIFIER DOT IDENTIFIER;
-
-compositeLit: literalType literalValue;
-
-literalType:
-	structType
-	| arrayType
-	| L_BRACKET ELLIPSIS R_BRACKET elementType
-	| sliceType
-	| typeName;
-
-literalValue: L_CURLY (elementList COMMA?)? R_CURLY;
-
-elementList: keyedElement (COMMA keyedElement)*;
-
-keyedElement: (key COLON)? element;
-
-key: expression | literalValue;
-
-element: expression | literalValue;
-
-structType: STRUCT L_CURLY (fieldDecl eos)* R_CURLY;
-
-fieldDecl: identifierList type_;
-
-string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
-
-functionLit: FN signature block; // function
-
-index: L_BRACKET expression R_BRACKET;
-
-slice_:
-	L_BRACKET (
-		expression? COLON expression?
-		| expression? COLON expression COLON expression
-	) R_BRACKET;
-
-arguments:
-	L_PAREN (
-		(expressionList | nonNamedType (COMMA expressionList)?) ELLIPSIS? COMMA?
-	)? R_PAREN;
-
-methodExpr: nonNamedType DOT IDENTIFIER;
-
-//----------------------------------------------------------------------------------------------------------------
-//  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
-annotation
-    : ('@' USING '('  ')')?
-    ;
-
-typeType
-    : primitiveType  
-	| structType
-	| interfaceType
-	| txScriptType
-	| assetScriptType
-	| txContractType
-	| contractType
-    ;
-
-structType
-	:
-	;
-
-interfaceType
-	:
-	;
-
-txScriptType
-	:
-	;
-
-assetScriptType
-	:
-	;
-
-txContractType
-	:
-	;
-
-contractType
-	:
-	;
-		
-
-primitiveType
-    : BOOL
-    | I256
-    | BYTE
-    | U256
-    | BYTEVEC
-    | ADDRESS
-    ;
-
-typeArgument
-    : typeType
-    | (EXTENDS  typeType)?
-    ;
-
-typeArguments
-    : '<' typeArgument (',' typeArgument)* '>'
-    ;
-
+//other--------------------------------------------------------
 eos:
 	SEMI
 	| EOF
@@ -329,3 +328,4 @@ eos:
 	| {this.closingBracket()}?
 	;
 
+//other--------------------------------------------------------
