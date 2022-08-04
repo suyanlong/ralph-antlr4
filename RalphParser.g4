@@ -106,21 +106,15 @@ typeSpec: IDENTIFIER ASSIGN? type_;
 
 typeList: (type_) (COMMA (type_))*;
 
-type_: typeName | typeLit | L_PAREN type_ R_PAREN;
+type_: typeName | typeLit | L_PAREN type_ R_PAREN | typeStruct;
 
 typeName: qualifiedIdent | IDENTIFIER;
 
 typeLit
     : primitiveType  
 	| arrayType
-	| structType
 	| functionType
 	| sliceType
-	| interfaceType
-	| txScriptType
-	| assetScriptType
-	| txContractType
-	| contractType
 	;
 
 arrayType: L_BRACKET arrayLength elementType R_BRACKET;
@@ -185,48 +179,37 @@ arguments
 	  )? R_PAREN
 	;
 
+// Function declarations
+methodDecl
+	:  (annotation eos)? PUB? FN PAYABLE? IDENTIFIER signature block?
+	;
+
 sliceType: L_BRACKET R_BRACKET elementType;
 
-structType: STRUCT IDENTIFIER L_CURLY (fieldDecl eos)* R_CURLY;
+typeStruct: typeStructHeader structBody; 
 
-// Function declarations
-methodDecl: PUB? FN PAYABLE? IDENTIFIER ( signature block?);
-
-//method 
-methodSpec: PUB? FN PAYABLE? IDENTIFIER signature;
-
-interfaceType:
-	INTERFACE IDENTIFIER L_CURLY ((methodSpec | typeName) eos)* R_CURLY;
-
-txScriptType
-	: 
-	;
-
-assetScriptType
-	:
-	;
-
-txContractType
-	: TXCONTRACT IDENTIFIER (L_CURLY (fieldDecl eos)* R_CURLY)?(L_PAREN (fieldDecl eos)* R_PAREN)? (EXTENDS | IMPLEMENTS) 
+typeParam
+	: STRUCT
+	| ENUM
+	| INTERFACE
+	| TXSCRIPT
+	| TXCONTRACT
+	| CONTRACT
+	| ASSETSCRIPT
 	; 
 
-
-structBody
-	: 
+typeStructHeader
+	: typeParam IDENTIFIER ('<' (fieldDecl eos)* '>')? (L_PAREN (fieldDecl eos)* R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN (fieldDecl eos)* R_PAREN)?)?
 	;
 
-contractType
-	: 
+typeStructBody
+	: L_CURLY ((fieldDecl | eventEmit | methodDecl | typeName ｜) eos)* R_CURLY 
 	;
 
-defArgument
-    : typeLit
-    | (EXTENDS  typeLit)?
-    ;
-
-typeArguments
-    : '<' typeArgument (',' typeArgument)* '>'
-    ;
+eventEmit
+	: EVENT IDENTIFIER (L_PAREN (fieldDecl eos)* R_PAREN)?
+	| EVMIT IDENTIFIER (L_PAREN expressionList R_PAREN)?
+	;	
 
 
 //  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
@@ -273,7 +256,9 @@ simpleStmt
 	| incDecStmt
 	| assignment
 	| expressionStmt
-	| shortVarDecl;
+	| shortVarDecl
+	| eventEmit
+	;
 
 expressionStmt: expression;
 
