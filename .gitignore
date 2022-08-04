@@ -1,2 +1,9 @@
 *.class
 *.log
+antlr*.jar
+.idea
+gen
+RalphLexer.tokens
+.antlr
+target
+src
