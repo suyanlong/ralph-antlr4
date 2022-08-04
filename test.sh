@@ -14,7 +14,8 @@ fi
 
 mkdir -p target/
 
-java -jar $ANTLR_JAR $GRAMMAR.g4 -o src/
+# java -jar $ANTLR_JAR $GRAMMAR.g4 -o src/
+java -jar $ANTLR_JAR *.g4 -o src/
 #java -jar $ANTLR_JAR *.g4 -o src/
 javac -classpath $ANTLR_JAR src/*.java -d target/
 

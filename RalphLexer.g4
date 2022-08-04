@@ -54,6 +54,8 @@ U256                   :'U256';
 BYTEVEC                :'ByteVec';
 ADDRESS                :'Address';
 
+//->
+RETURNBACK             :'->';
 
 
 IDENTIFIER             : LETTER (LETTER | UNICODE_DIGIT)* -> mode(NLSEMI);

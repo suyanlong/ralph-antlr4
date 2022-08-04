@@ -125,7 +125,7 @@ elementType: type_;
 
 functionType: PUB? FN PAYABLE? signature;
 
-signature: parameters ( '->' result)?;
+signature: parameters ( RETURNBACK result)?;
 
 result
 	: L_PAREN R_PAREN
@@ -238,7 +238,7 @@ varParamList
 
 block: L_CURLY statementList? R_CURLY;
 
-statementList: ((SEMI? | EOS? | {this.closingBracket()}?) statement eos)+;
+statementList: ((SEMI? | EOS?) statement eos)+;
 
 statement:
 	declaration
@@ -311,7 +311,6 @@ eos:
 	SEMI
 	| EOF
 	| EOS
-	| {this.closingBracket()}?
 	;
 
 //other--------------------------------------------------------
