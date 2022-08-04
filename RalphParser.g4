@@ -5,7 +5,7 @@ options
    tokenVocab = RalphLexer;
 }
 
-sourceFile:(importDecl eos)* (declaration eos)* EOF;
+sourceFile:  (importDecl eos)* (declaration eos)* EOF;
 
 //import------------------------------------------------------
 importDecl:
@@ -155,7 +155,8 @@ integer
 	| OCTAL_LIT
 	| HEX_LIT
 	| IMAGINARY_LIT
-	| RUNE_LIT;
+	| RUNE_LIT
+    ;
 
 qualifiedIdent: IDENTIFIER DOT IDENTIFIER;
 
@@ -181,12 +182,12 @@ arguments
 
 // Function declarations
 methodDecl
-	:  (annotation eos)? PUB? FN PAYABLE? IDENTIFIER signature block?
+	:  (annotation EOS)? PUB? FN PAYABLE? IDENTIFIER signature block?
 	;
 
 sliceType: L_BRACKET R_BRACKET elementType;
 
-typeStruct: typeStructHeader structBody; 
+typeStruct: typeStructHeader typeStructBody; 
 
 typeParam
 	: STRUCT
@@ -203,7 +204,7 @@ typeStructHeader
 	;
 
 typeStructBody
-	: L_CURLY ((fieldDecl | eventEmit | methodDecl | typeName ｜) eos)* R_CURLY 
+	: L_CURLY ((fieldDecl | eventEmit | methodDecl | typeName) eos)* R_CURLY 
 	;
 
 eventEmit

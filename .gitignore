@@ -5,3 +5,5 @@ antlr*.jar
 gen
 RalphLexer.tokens
 .antlr
+target
+src

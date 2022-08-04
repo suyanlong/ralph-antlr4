@@ -1,11 +1,12 @@
 #!/bin/bash
 
-ANTLR_JAR="antlr4.jar"
+ANTLR_JAR="antlr-4.10.1-complete.jar"
 
 GRAMMAR="Ralph"
 START_RULE="sourceUnit"
 TEST_FILE="test.ral"
-ERROR_PATTERN="mismatched|extraneous"
+# ERROR_PATTERN="mismatched|extraneous"
+ERROR_PATTERN="extraneous"
 
 if [ ! -e "$ANTLR_JAR" ]; then
   curl https://www.antlr.org/download/antlr-4.10.1-complete.jar -o "$ANTLR_JAR"
