@@ -1,12 +1,13 @@
 # Ralph language specification
 
 ## Introduction
-ralph language written in antlr4 grammar. The goal of this repo is to provide a ralph specification antlr v4 grammar.
+ralph language specification written in antlr4 grammar. in order to auto generation other language library.
+
 ## Features
 * Simple、High efficiency.
 * Generate AST for various languages.
 
-## official [Ralph](https://github.com/alephium/alephium/tree/master/protocol/src/main/scala/org/alephium/protocol/vm/lang) specification
+## Official [Ralph](https://github.com/alephium/alephium/tree/master/protocol/src/main/scala/org/alephium/protocol/vm/lang) specification
 
 ## Build Dep
 * java
