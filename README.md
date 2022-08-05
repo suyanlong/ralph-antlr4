@@ -25,12 +25,8 @@ make
 * [ralph-parser](https://github.com/suyanlong/ralph-parser-ts) by TypeScript
 
 ## More resources
-### antlr4 grammar
-https://github.com/antlr/antlr4/blob/master/doc/index.md
-
-### antlr4 guide
-
-https://github.com/antlr/grammars-v4
+* [antlr4 grammar](https://github.com/antlr/antlr4/blob/master/doc/index.md)
+* [antlr4 guide](https://github.com/antlr/grammars-v4)
 
 ## FAQ
 
