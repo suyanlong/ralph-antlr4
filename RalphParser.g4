@@ -125,7 +125,7 @@ elementType: type_;
 
 functionType: PUB? FN PAYABLE? signature;
 
-signature: parameters ( RETURNBACK result)?;
+signature: parameters ( R_ARROW result)?;
 
 result
 	: L_PAREN R_PAREN

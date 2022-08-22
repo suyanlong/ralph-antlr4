@@ -55,7 +55,7 @@ BYTEVEC                :'ByteVec';
 ADDRESS                :'Address';
 
 //->
-RETURNBACK             :'->';
+R_ARROW                :'->';
 
 
 IDENTIFIER             : LETTER (LETTER | UNICODE_DIGIT)* -> mode(NLSEMI);
