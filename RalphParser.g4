@@ -17,23 +17,23 @@ importPath: string_;
 
 //import------------------------------------------------------
 
-declaration: constDecl | typeDecl | varDecl;
+declaration: constDecl | typeDecl | letDecl;
 identifierList: IDENTIFIER (COMMA IDENTIFIER)*;
 
-//var--------------------------------------------------------
+//let--------------------------------------------------------
 constDecl: CONST (constSpec | L_PAREN (constSpec eos)* R_PAREN);
 
 constSpec: identifierList (type_? ASSIGN expressionList)?;
 
-varDecl: LET MUT? (varSpec | L_PAREN (varSpec eos)* R_PAREN);
+letDecl: LET MUT? (letSpec | L_PAREN (letSpec eos)* R_PAREN);
 
-varSpec:
+letSpec:
 	identifierList (
 		type_ (ASSIGN expressionList)?
 		| ASSIGN expressionList
 	);
 
-//var--------------------------------------------------------
+//let--------------------------------------------------------
 
 
 //expression--------------------------------------------------------
