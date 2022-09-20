@@ -37,55 +37,46 @@ letSpec:
 
 
 //expression--------------------------------------------------------
-
 expression:
 	primaryExpr
 	| unary_op = (
-		PLUS
-		| MINUS
-		| EXCLAMATION
-		| CARET
-		| STAR
-		| AMPERSAND
-		| RECEIVE
+		SUB | NOT
 	) expression
-	| expression mul_op = (
-		STAR
-		| DIV
-		| MOD
-		| LSHIFT
-		| RSHIFT
-		| AMPERSAND
-		| BIT_CLEAR
+	| expression (
+        CONCAT
+        | ADD
+        | SUB
+        | MUL
+        | DIV
+        | MOD
+        | MODADD
+        | MODSUB
+        | MODMUL
+        | SHL
+        | SHR
+        | BITAND
+        | XOR
+		| BITOR
 	) expression
-	| expression add_op = (PLUS | MINUS | OR | CARET) expression
 	| expression rel_op = (
-		EQUALS
-		| NOT_EQUALS
-		| LESS
-		| LESS_OR_EQUALS
-		| GREATER
-		| GREATER_OR_EQUALS
+		EQ
+		| NQ
+		| LT
+		| LE
+		| GT
+		| GE
 	) expression
-	| expression LOGICAL_AND expression
-	| expression LOGICAL_OR expression;
+	| expression (AND | OR)expression;
 
 expressionList: expression (COMMA expression)*;
 
 primaryExpr
-	: operand
-	| conversion
-	| methodExpr
+	: basicLit
 	| primaryExpr (
 		(DOT IDENTIFIER)
 		| index
-		| slice_
 		| arguments
 	);
-
-conversion: nonNamedType L_PAREN expression COMMA? R_PAREN;
-
-methodExpr: nonNamedType DOT IDENTIFIER;
 
 //expression--------------------------------------------------------
 
@@ -100,30 +91,28 @@ primitiveType
     | ADDRESS
     ;
 
+arrayType: L_BRACKET elementType ';' arrayLength R_BRACKET;
+
+arrayLength: expression;
+
+elementType: type_;
+
+// 数组字面量：[1,2,3,4]
+// 地址字面量：#"asdad"
+//  
+
 typeDecl: TYPE (typeSpec | L_PAREN (typeSpec eos)* R_PAREN);
 
 typeSpec: IDENTIFIER ASSIGN? type_;
 
 typeList: (type_) (COMMA (type_))*;
 
-type_: typeName | typeLit | L_PAREN type_ R_PAREN | typeStruct;
+type_:  typeBasic | typeStruct;
 
-typeName: qualifiedIdent | IDENTIFIER;
-
-typeLit
+typeBasic
     : primitiveType  
 	| arrayType
-	| functionType
-	| sliceType
 	;
-
-arrayType: L_BRACKET arrayLength elementType R_BRACKET;
-
-arrayLength: expression;
-
-elementType: type_;
-
-functionType: PUB? FN PAYABLE? signature;
 
 signature: parameters ( R_ARROW result)?;
 
@@ -136,13 +125,7 @@ result
 parameters:
 	L_PAREN (parameterDecl (COMMA parameterDecl)* COMMA?)? R_PAREN;
 
-parameterDecl: identifierList? ELLIPSIS? type_;
-
-nonNamedType: typeLit | L_PAREN nonNamedType R_PAREN;
-
-operand: literal | IDENTIFIER | L_PAREN expression R_PAREN;
-
-literal: basicLit ;
+parameterDecl: identifierList? type_;
 
 basicLit
 	: integer
@@ -158,7 +141,6 @@ integer
 	| RUNE_LIT
     ;
 
-qualifiedIdent: IDENTIFIER DOT IDENTIFIER;
 
 fieldDecl: LET? MUT? identifierList COLON type_;
 
@@ -166,26 +148,14 @@ string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
 
 index: L_BRACKET expression R_BRACKET;
 
-slice_
-	:L_BRACKET (
-		  expression? COLON expression?
-		| expression? COLON expression COLON expression
-	) R_BRACKET;
-
 arguments
-	: L_PAREN (
-		( expressionList 
-		| nonNamedType (COMMA expressionList)?
-		) ELLIPSIS? COMMA?
-	  )? R_PAREN
+	: L_PAREN ( ( expressionList ) COMMA? )? R_PAREN
 	;
 
 // Function declarations
 methodDecl
 	:  (annotation EOS)? PUB? FN PAYABLE? IDENTIFIER signature block?
 	;
-
-sliceType: L_BRACKET R_BRACKET elementType;
 
 typeStruct: typeStructHeader typeStructBody; 
 
@@ -204,7 +174,7 @@ typeStructHeader
 	;
 
 typeStructBody
-	: L_CURLY ((fieldDecl | eventEmit | methodDecl | typeName) eos)* R_CURLY 
+	: L_CURLY ((fieldDecl | eventEmit | methodDecl) eos)* R_CURLY 
 	;
 
 eventEmit
@@ -254,34 +224,11 @@ statement:
 
 simpleStmt
 	: emptyStmt
-	| incDecStmt
-	| assignment
 	| expressionStmt
-	| shortVarDecl
 	| eventEmit
 	;
 
 expressionStmt: expression;
-
-incDecStmt: expression (PLUS_PLUS | MINUS_MINUS);
-
-assignment: expressionList assign_op expressionList;
-
-assign_op: (
-		PLUS
-		| MINUS
-		| OR
-		| CARET
-		| STAR
-		| DIV
-		| MOD
-		| LSHIFT
-		| RSHIFT
-		| AMPERSAND
-		| BIT_CLEAR
-	)? ASSIGN;
-
-shortVarDecl: identifierList DECLARE_ASSIGN expressionList;
 
 emptyStmt: EOS | SEMI;
 

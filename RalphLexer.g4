@@ -8,7 +8,7 @@ PACKAGE                : 'package';
 FN                     : 'fn';
 PUB                    : 'pub';
 PAYABLE                : 'payable';
-RETURN                 : 'return' -> mode(NLSEMI);
+RETURN                 : 'return' ;
 
 INTERFACE              : 'Interface';
 STRUCT                 : 'struct';
@@ -22,8 +22,8 @@ IF                     : 'if';
 ELSE                   : 'else';
 FOR                    : 'for';
 WHILE                  : 'while';
-BREAK                  : 'break' -> mode(NLSEMI);
-CONTINUE               : 'continue' -> mode(NLSEMI);
+BREAK                  : 'break';
+CONTINUE               : 'continue';
 DEFAULT                : 'default';
 GOTO                   : 'goto';
 SWITCH                 : 'switch';
@@ -51,6 +51,7 @@ AT                     :'@';
 BOOL                   :'Bool';
 I256                   :'I256';
 U256                   :'U256';
+BYTE                   :'Byte';
 BYTEVEC                :'ByteVec';
 ADDRESS                :'Address';
 
@@ -58,98 +59,58 @@ ADDRESS                :'Address';
 R_ARROW                :'->';
 
 
-IDENTIFIER             : LETTER (LETTER | UNICODE_DIGIT)* -> mode(NLSEMI);
+IDENTIFIER             : LETTER (LETTER | UNICODE_DIGIT)*;
 
 // Punctuation
 
 L_PAREN                : '(';
-R_PAREN                : ')' -> mode(NLSEMI);
+R_PAREN                : ')';
 L_CURLY                : '{';
-R_CURLY                : '}' -> mode(NLSEMI);
+R_CURLY                : '}';
 L_BRACKET              : '[';
-R_BRACKET              : ']' -> mode(NLSEMI);
+R_BRACKET              : ']';
 ASSIGN                 : '=';
 COMMA                  : ',';
 SEMI                   : ';';
 COLON                  : ':';
 DOT                    : '.';
-PLUS_PLUS              : '++' -> mode(NLSEMI);
-MINUS_MINUS            : '--' -> mode(NLSEMI);
-DECLARE_ASSIGN         : ':=';
-ELLIPSIS               : '...';
 
-
-
-//def opByteVecAdd[Unknown: P]: P[Operator] = P("++").map(_ => Concat)
-//def opAdd[Unknown: P]: P[Operator]        = P("+").map(_ => Add)
-//def opSub[Unknown: P]: P[Operator]        = P("-").map(_ => Sub)
-//def opMul[Unknown: P]: P[Operator]        = P("*").map(_ => Mul)
-//def opDiv[Unknown: P]: P[Operator]        = P("/").map(_ => Div)
-//def opMod[Unknown: P]: P[Operator]        = P("%").map(_ => Mod)
-//def opModAdd[Unknown: P]: P[Operator]     = P("⊕" | "`+`").map(_ => ModAdd)
-//def opModSub[Unknown: P]: P[Operator]     = P("⊖" | "`-`").map(_ => ModSub)
-//def opModMul[Unknown: P]: P[Operator]     = P("⊗" | "`*`").map(_ => ModMul)
-//def opSHL[Unknown: P]: P[Operator]        = P("<<").map(_ => SHL)
-//def opSHR[Unknown: P]: P[Operator]        = P(">>").map(_ => SHR)
-//def opBitAnd[Unknown: P]: P[Operator]     = P("&").map(_ => BitAnd)
-//def opXor[Unknown: P]: P[Operator]        = P("^").map(_ => Xor)
-//def opBitOr[Unknown: P]: P[Operator]      = P("|").map(_ => BitOr)
-//def opEq[Unknown: P]: P[TestOperator]     = P("==").map(_ => Eq)
-//def opNe[Unknown: P]: P[TestOperator]     = P("!=").map(_ => Ne)
-//def opLt[Unknown: P]: P[TestOperator]     = P("<").map(_ => Lt)
-//def opLe[Unknown: P]: P[TestOperator]     = P("<=").map(_ => Le)
-//def opGt[Unknown: P]: P[TestOperator]     = P(">").map(_ => Gt)
-//def opGe[Unknown: P]: P[TestOperator]     = P(">=").map(_ => Ge)
-//def opAnd[Unknown: P]: P[LogicalOperator] = P("&&").map(_ => And)
-//def opOr[Unknown: P]: P[LogicalOperator]  = P("||").map(_ => Or)
-//def opNot[Unknown: P]: P[LogicalOperator] = P("!").map(_ => Not)
-
-
-// Logical
-
-LOGICAL_OR             : '||';
-LOGICAL_AND            : '&&';
-
-// Relation operators
-
-EQUALS                 : '==';
-NOT_EQUALS             : '!=';
-LESS                   : '<';
-LESS_OR_EQUALS         : '<=';
-GREATER                : '>';
-GREATER_OR_EQUALS      : '>=';
-
-// Arithmetic operators
-
-OR                     : '|';
+//Operator
+CONCAT                 : '++';
+ADD                    : '+';
+SUB                    : '-';
+MUL                    : '*';
 DIV                    : '/';
 MOD                    : '%';
-LSHIFT                 : '<<';
-RSHIFT                 : '>>';
-BIT_CLEAR              : '&^';
-
-// Unary operators
-
-EXCLAMATION            : '!';
-
-// Mixed operators
-
-PLUS                   : '+';
-MINUS                  : '-';
-CARET                  : '^';
-STAR                   : '*';
-AMPERSAND              : '&';
-RECEIVE                : '<-';
+MODADD                 : '⊕' | '`+`';
+MODSUB                 : '⊖' | '`-`';
+MODMUL                 : '⊗' | '`*`';
+SHL                    : '<<';
+SHR                    : '>>';
+BITAND                 : '&';
+XOR                    : '^';
+BITOR                  : '|';
+//TestOperator
+EQ                     : '==';
+NQ                     : '!=';
+LT                     : '<';
+LE                     : '<=';
+GT                     : '>';
+GE                     : '>=';
+//LogicalOperator
+AND                    : '&&';
+OR                     : '||';
+NOT                    : '!';
 
 // Number literals
 
-DECIMAL_LIT            : ('0' | [1-9] ('_'? [0-9])*) -> mode(NLSEMI);
-BINARY_LIT             : '0' [bB] ('_'? BIN_DIGIT)+ -> mode(NLSEMI);
-OCTAL_LIT              : '0' [oO]? ('_'? OCTAL_DIGIT)+ -> mode(NLSEMI);
-HEX_LIT                : '0' [xX]  ('_'? HEX_DIGIT)+ -> mode(NLSEMI);
+DECIMAL_LIT            : ('0' | [1-9] ('_'? [0-9])*);
+BINARY_LIT             : '0' [bB] ('_'? BIN_DIGIT)+;
+OCTAL_LIT              : '0' [oO]? ('_'? OCTAL_DIGIT)+;
+HEX_LIT                : '0' [xX]  ('_'? HEX_DIGIT)+;
 
 
-FLOAT_LIT : (DECIMAL_FLOAT_LIT | HEX_FLOAT_LIT) -> mode(NLSEMI);
+FLOAT_LIT : (DECIMAL_FLOAT_LIT | HEX_FLOAT_LIT);
 
 DECIMAL_FLOAT_LIT      : DECIMALS ('.' DECIMALS? EXPONENT? | EXPONENT)
                        | '.' DECIMALS EXPONENT?
@@ -164,13 +125,13 @@ fragment HEX_MANTISSA  : ('_'? HEX_DIGIT)+ ('.' ( '_'? HEX_DIGIT )*)?
 fragment HEX_EXPONENT  : [pP] [+-]? DECIMALS;
 
 
-IMAGINARY_LIT          : (DECIMAL_LIT | BINARY_LIT |  OCTAL_LIT | HEX_LIT | FLOAT_LIT) 'i' -> mode(NLSEMI);
+IMAGINARY_LIT          : (DECIMAL_LIT | BINARY_LIT |  OCTAL_LIT | HEX_LIT | FLOAT_LIT) 'i' ;
 
 // Rune literals
 
 fragment RUNE               : '\'' (UNICODE_VALUE | BYTE_VALUE) '\'';//: '\'' (~[\n\\] | ESCAPED_VALUE) '\'';
 
-RUNE_LIT                : RUNE -> mode(NLSEMI);
+RUNE_LIT                : RUNE;
 
 
 
@@ -186,8 +147,8 @@ BIG_U_VALUE: '\\' 'U' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGI
 
 // String literals
 
-RAW_STRING_LIT         : '`' ~'`'*                      '`' -> mode(NLSEMI);
-INTERPRETED_STRING_LIT : '"' (~["\\] | ESCAPED_VALUE)*  '"' -> mode(NLSEMI);
+RAW_STRING_LIT         : '`' ~'`'*                      '`';
+INTERPRETED_STRING_LIT : '"' (~["\\] | ESCAPED_VALUE)*  '"';
 // Hidden tokens
 WS                     : [ \t]+             -> channel(HIDDEN);
 COMMENT                : '/*' .*? '*/'      -> channel(HIDDEN);
@@ -228,14 +189,10 @@ fragment UNICODE_DIGIT
 fragment UNICODE_LETTER
     : [\p{L}]
     ;
-mode NLSEMI;
-// Treat whitespace as normal
-WS_NLSEMI                     : [ \t]+             -> channel(HIDDEN);
-// Ignore any comments that only span one line
-COMMENT_NLSEMI                : '/*' ~[\r\n]*? '*/'      -> channel(HIDDEN);
-LINE_COMMENT_NLSEMI : '//' ~[\r\n]*      -> channel(HIDDEN);
+
 // Emit an EOS token for any newlines, semicolon, multiline comments or the EOF and
 //return to normal lexing
-EOS:              ([\r\n]+ | ';' | '/*' .*? '*/' | EOF)            -> mode(DEFAULT_MODE);
+EOS:              ([\r\n]+ | ';' | '/*' .*? '*/' | EOF);
+
 // Did not find an EOS, so go back to normal lexing
-OTHER: -> mode(DEFAULT_MODE), channel(HIDDEN);
+// OTHER: -> mode(DEFAULT_MODE), channel(HIDDEN);
