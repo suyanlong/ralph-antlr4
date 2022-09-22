@@ -8,30 +8,18 @@ options
 sourceFile:  (importDecl eos)* (declaration eos)* EOF;
 
 //import------------------------------------------------------
-importDecl:
-	IMPORT (importSpec | L_PAREN (importSpec eos)* R_PAREN);
-
-importSpec: alias = (DOT | IDENTIFIER)? importPath;
-
-importPath: string_;
+importDecl: IMPORT (string_ | L_PAREN (string_ eos)* R_PAREN);
 
 //import------------------------------------------------------
 
 declaration: constDecl | typeDecl | letDecl;
+
 identifierList: IDENTIFIER (COMMA IDENTIFIER)*;
 
 //let--------------------------------------------------------
-constDecl: CONST (constSpec | L_PAREN (constSpec eos)* R_PAREN);
+constDecl: CONST L_PAREN? identifierList R_PAREN? ASSIGN expressionList;
 
-constSpec: identifierList (type_? ASSIGN expressionList)?;
-
-letDecl: LET MUT? (letSpec | L_PAREN (letSpec eos)* R_PAREN);
-
-letSpec:
-	identifierList (
-		type_ (ASSIGN expressionList)?
-		| ASSIGN expressionList
-	);
+letDecl: LET MUT? L_PAREN? identifierList R_PAREN? ASSIGN expressionList;
 
 //let--------------------------------------------------------
 
@@ -39,9 +27,7 @@ letSpec:
 //expression--------------------------------------------------------
 expression:
 	primaryExpr
-	| unary_op = (
-		SUB | NOT
-	) expression
+	|(SUB | NOT) expression
 	| expression (
         CONCAT
         | ADD
@@ -58,7 +44,7 @@ expression:
         | XOR
 		| BITOR
 	) expression
-	| expression rel_op = (
+	| expression (
 		EQ
 		| NQ
 		| LT
@@ -66,17 +52,19 @@ expression:
 		| GT
 		| GE
 	) expression
-	| expression (AND | OR)expression;
+	| expression (AND | OR) expression;
 
 expressionList: expression (COMMA expression)*;
 
+arrayExpr: L_BRACKET expression R_BRACKET;
+
+methodExpr: IDENTIFIER L_PAREN expressionList R_PAREN;
+
 primaryExpr
 	: basicLit
-	| primaryExpr (
-		(DOT IDENTIFIER)
-		| index
-		| arguments
-	);
+	| arrayExpr
+	| methodExpr
+	;
 
 //expression--------------------------------------------------------
 
@@ -91,41 +79,23 @@ primitiveType
     | ADDRESS
     ;
 
-arrayType: L_BRACKET elementType ';' arrayLength R_BRACKET;
-
+arrayType: L_BRACKET typeDecl SEMI arrayLength R_BRACKET;
 arrayLength: expression;
 
-elementType: type_;
-
-// 数组字面量：[1,2,3,4]
-// 地址字面量：#"asdad"
-//  
-
-typeDecl: TYPE (typeSpec | L_PAREN (typeSpec eos)* R_PAREN);
-
-typeSpec: IDENTIFIER ASSIGN? type_;
-
-typeList: (type_) (COMMA (type_))*;
-
-type_:  typeBasic | typeStruct;
-
-typeBasic
-    : primitiveType  
-	| arrayType
-	;
-
-signature: parameters ( R_ARROW result)?;
+typeDecl:  primitiveType | arrayType | typeStruct;
 
 result
 	: L_PAREN R_PAREN
-    | type_
-    | L_PAREN (type_ (COMMA type_)* COMMA?)? R_PAREN
+    | typeDecl
+    | L_PAREN (typeDecl (COMMA typeDecl)* COMMA?)? R_PAREN
     ;
 
-parameters:
-	L_PAREN (parameterDecl (COMMA parameterDecl)* COMMA?)? R_PAREN;
+parameterDecl: IDENTIFIER COLON typeDecl;
 
-parameterDecl: identifierList? type_;
+// Function declarations
+methodDecl
+	:  (annotation EOS)? PUB? FN PAYABLE? IDENTIFIER L_PAREN (parameterDecl (COMMA parameterDecl)*)? R_PAREN (R_ARROW result)? block?
+	;
 
 basicLit
 	: integer
@@ -142,20 +112,9 @@ integer
     ;
 
 
-fieldDecl: LET? MUT? identifierList COLON type_;
+fieldDecl: LET? MUT? IDENTIFIER COLON typeDecl;
 
 string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
-
-index: L_BRACKET expression R_BRACKET;
-
-arguments
-	: L_PAREN ( ( expressionList ) COMMA? )? R_PAREN
-	;
-
-// Function declarations
-methodDecl
-	:  (annotation EOS)? PUB? FN PAYABLE? IDENTIFIER signature block?
-	;
 
 typeStruct: typeStructHeader typeStructBody; 
 
@@ -185,21 +144,16 @@ eventEmit
 
 //  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
 annotation
-    : (AT USING L_PAREN varAssignParamList R_PAREN)?
+    : (AT USING L_PAREN (assignParamList | expressionList) R_PAREN)?
     ;
 
-varAssignParamList
-    : assign (','assign)*
+assignParamList
+    : assign (COMMA assign)*
     ;
 
 assign
-    : (IDENTIFIER | varParamList) ASSIGN expressionStmt
+    : IDENTIFIER ASSIGN expression
     ;
-
-varParamList
-    : L_PAREN IDENTIFIER (',' IDENTIFIER)* R_PAREN
-    ;
-
 
 //type--------------------------------------------------------
 
@@ -214,12 +168,12 @@ statement:
 	declaration
 	| simpleStmt
 	| returnStmt
-	| breakStmt
-	| continueStmt
 	| block
 	| ifStmt
-	| forStmt
 	| whileStmt
+	// | breakStmt
+	// | continueStmt
+	// | forStmt
 	;
 
 simpleStmt
@@ -234,19 +188,11 @@ emptyStmt: EOS | SEMI;
 
 returnStmt: RETURN expressionList?;
 
-breakStmt: BREAK IDENTIFIER?;
+// breakStmt: BREAK IDENTIFIER?;å
+// continueStmt: CONTINUE IDENTIFIER?;
+// forStmt: FOR (expression?) block;
 
-continueStmt: CONTINUE IDENTIFIER?;
-
-ifStmt:
-	IF ( expression
-			| eos expression
-			| simpleStmt eos expression
-			) block (
-		ELSE (ifStmt | block)
-	)?;
-
-forStmt: FOR (expression?) block;
+ifStmt: IF (expression) block (ELSE (ifStmt | block))?;
 
 whileStmt: WHILE (expression?) block;
 

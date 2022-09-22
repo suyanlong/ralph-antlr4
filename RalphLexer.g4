@@ -20,15 +20,15 @@ ASSETSCRIPT            : 'AssetScript';
 
 IF                     : 'if';
 ELSE                   : 'else';
-FOR                    : 'for';
 WHILE                  : 'while';
-BREAK                  : 'break';
-CONTINUE               : 'continue';
-DEFAULT                : 'default';
-GOTO                   : 'goto';
-SWITCH                 : 'switch';
-CASE                   : 'case';
-TYPE                   : 'type';
+// FOR                    : 'for';
+// BREAK                  : 'break';
+// CONTINUE               : 'continue';
+// DEFAULT                : 'default';
+// GOTO                   : 'goto';
+// SWITCH                 : 'switch';
+// CASE                   : 'case';
+// TYPE                   : 'type';
 
 LET                    : 'let';
 CONST                  : 'const';
@@ -102,8 +102,9 @@ AND                    : '&&';
 OR                     : '||';
 NOT                    : '!';
 
-// Number literals
 
+//TODO
+// Number literals
 DECIMAL_LIT            : ('0' | [1-9] ('_'? [0-9])*);
 BINARY_LIT             : '0' [bB] ('_'? BIN_DIGIT)+;
 OCTAL_LIT              : '0' [oO]? ('_'? OCTAL_DIGIT)+;
@@ -129,7 +130,7 @@ IMAGINARY_LIT          : (DECIMAL_LIT | BINARY_LIT |  OCTAL_LIT | HEX_LIT | FLOA
 
 // Rune literals
 
-fragment RUNE               : '\'' (UNICODE_VALUE | BYTE_VALUE) '\'';//: '\'' (~[\n\\] | ESCAPED_VALUE) '\'';
+fragment RUNE           : '\'' (UNICODE_VALUE | BYTE_VALUE) '\'';//: '\'' (~[\n\\] | ESCAPED_VALUE) '\'';
 
 RUNE_LIT                : RUNE;
 
@@ -149,6 +150,7 @@ BIG_U_VALUE: '\\' 'U' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGI
 
 RAW_STRING_LIT         : '`' ~'`'*                      '`';
 INTERPRETED_STRING_LIT : '"' (~["\\] | ESCAPED_VALUE)*  '"';
+
 // Hidden tokens
 WS                     : [ \t]+             -> channel(HIDDEN);
 COMMENT                : '/*' .*? '*/'      -> channel(HIDDEN);
@@ -194,5 +196,3 @@ fragment UNICODE_LETTER
 //return to normal lexing
 EOS:              ([\r\n]+ | ';' | '/*' .*? '*/' | EOF);
 
-// Did not find an EOS, so go back to normal lexing
-// OTHER: -> mode(DEFAULT_MODE), channel(HIDDEN);
