@@ -30,13 +30,13 @@ WHILE                  : 'while';
 // CASE                   : 'case';
 // TYPE                   : 'type';
 
+TRUE                   :'true';
+FALSE                  :'false';
+ALPH                   :'alph';
+
 LET                    : 'let';
 CONST                  : 'const';
 MUT                    : 'mut';
-
-//TRUE                   :'true';
-//FALSE                  :'false';
-ALPH                   :'alph';
 
 EXTENDS                :'extends';
 ABSTRACT               :'Abstract';
@@ -47,7 +47,6 @@ EVMIT                  :'emit';
 //@using|using
 USING                  :'using';
 AT                     :'@';
-//type
 BOOL                   :'Bool';
 I256                   :'I256';
 U256                   :'U256';
@@ -59,10 +58,9 @@ ADDRESS                :'Address';
 R_ARROW                :'->';
 
 
-IDENTIFIER             : LETTER (LETTER | UNICODE_DIGIT)*;
+IDENTIFIER             : LETTER (LETTER | DIGIT)* '!'?;
 
 // Punctuation
-
 L_PAREN                : '(';
 R_PAREN                : ')';
 L_CURLY                : '{';
@@ -74,6 +72,8 @@ COMMA                  : ',';
 SEMI                   : ';';
 COLON                  : ':';
 DOT                    : '.';
+POUND                  : '#';
+DOUBT                  : '?';
 
 //Operator
 CONCAT                 : '++';
@@ -110,6 +110,9 @@ BINARY_LIT             : '0' [bB] ('_'? BIN_DIGIT)+;
 OCTAL_LIT              : '0' [oO]? ('_'? OCTAL_DIGIT)+;
 HEX_LIT                : '0' [xX]  ('_'? HEX_DIGIT)+;
 
+ADDRESS_LIT            : '#' LETTER*;
+ALPH_LIT               : DIGIT* ' '? ALPH;
+BOOL_LIT               : TRUE | FALSE;
 
 FLOAT_LIT : (DECIMAL_FLOAT_LIT | HEX_FLOAT_LIT);
 
@@ -134,8 +137,6 @@ fragment RUNE           : '\'' (UNICODE_VALUE | BYTE_VALUE) '\'';//: '\'' (~[\n\
 
 RUNE_LIT                : RUNE;
 
-
-
 BYTE_VALUE : OCTAL_BYTE_VALUE | HEX_BYTE_VALUE;
 
 OCTAL_BYTE_VALUE: '\\' OCTAL_DIGIT OCTAL_DIGIT OCTAL_DIGIT;
@@ -150,12 +151,6 @@ BIG_U_VALUE: '\\' 'U' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGI
 
 RAW_STRING_LIT         : '`' ~'`'*                      '`';
 INTERPRETED_STRING_LIT : '"' (~["\\] | ESCAPED_VALUE)*  '"';
-
-// Hidden tokens
-WS                     : [ \t]+             -> channel(HIDDEN);
-COMMENT                : '/*' .*? '*/'      -> channel(HIDDEN);
-TERMINATOR             : [\r\n]+            -> channel(HIDDEN);
-LINE_COMMENT           : '//' ~[\r\n]*      -> channel(HIDDEN);
 
 fragment UNICODE_VALUE: ~[\r\n'] | LITTLE_U_VALUE | BIG_U_VALUE | ESCAPED_VALUE;
 // Fragments
@@ -182,17 +177,23 @@ fragment EXPONENT
     : [eE] [+-]? DECIMALS
     ;
 fragment LETTER
-    : UNICODE_LETTER
+    : [a-zA-Z]
     | '_'
     ;
 fragment UNICODE_DIGIT
     : [\p{Nd}]
     ;
-fragment UNICODE_LETTER
-    : [\p{L}]
+
+fragment DIGIT
+    : [0-9]
     ;
+
+// Whitespace and comments
+WS   : [ \t\n\r]+ -> skip ;
+COMMENT:            '/*' .*? '*/'    -> skip;
+LINE_COMMENT:       '//' ~[\r\n]*    -> skip;
+
 
 // Emit an EOS token for any newlines, semicolon, multiline comments or the EOF and
 //return to normal lexing
-EOS:              ([\r\n]+ | ';' | '/*' .*? '*/' | EOF);
-
+EOS: ([\r\t\n]+ | ';' | '/*' .*? '*/' | EOF)  -> mode(DEFAULT_MODE);

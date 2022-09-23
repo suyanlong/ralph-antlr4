@@ -5,29 +5,23 @@ options
    tokenVocab = RalphLexer;
 }
 
-sourceFile:  (importDecl eos)* (declaration eos)* EOF;
+sourceFile:  (importDecl)* (declaration)* EOF;
 
-//import------------------------------------------------------
-importDecl: IMPORT (string_ | L_PAREN (string_ eos)* R_PAREN);
 
-//import------------------------------------------------------
+importDecl: IMPORT string_;
 
-declaration: constDecl | typeDecl | letDecl;
+declaration: typeDeclStmt;
 
 identifierList: IDENTIFIER (COMMA IDENTIFIER)*;
 
-//let--------------------------------------------------------
-constDecl: CONST L_PAREN? identifierList R_PAREN? ASSIGN expressionList;
+varDecl: (CONST | (LET MUT?)) ((IDENTIFIER ASSIGN expression) | (L_PAREN identifierList R_PAREN ASSIGN expression));
 
-letDecl: LET MUT? L_PAREN? identifierList R_PAREN? ASSIGN expressionList;
-
-//let--------------------------------------------------------
-
-
-//expression--------------------------------------------------------
+//expression
 expression:
 	primaryExpr
-	|(SUB | NOT) expression
+	| IDENTIFIER
+	| methodCall
+	| (SUB | NOT) expression
 	| expression (
         CONCAT
         | ADD
@@ -52,23 +46,18 @@ expression:
 		| GT
 		| GE
 	) expression
-	| expression (AND | OR) expression;
+	| expression (AND | OR) expression
+	| expression ASSIGN expression
+	;
 
 expressionList: expression (COMMA expression)*;
 
-arrayExpr: L_BRACKET expression R_BRACKET;
-
-methodExpr: IDENTIFIER L_PAREN expressionList R_PAREN;
+methodCall: IDENTIFIER (DOT IDENTIFIER)* L_PAREN expressionList? R_PAREN;
 
 primaryExpr
 	: basicLit
 	| arrayExpr
-	| methodExpr
 	;
-
-//expression--------------------------------------------------------
-
-//type--------------------------------------------------------
 
 primitiveType
     : BOOL
@@ -79,27 +68,36 @@ primitiveType
     | ADDRESS
     ;
 
-arrayType: L_BRACKET typeDecl SEMI arrayLength R_BRACKET;
-arrayLength: expression;
+arrayType: L_BRACKET type_ SEMI expression R_BRACKET;
+arrayExpr: IDENTIFIER? L_BRACKET expression (COMMA expression)* R_BRACKET;
 
-typeDecl:  primitiveType | arrayType | typeStruct;
+
+type_: primitiveType | arrayType | IDENTIFIER ;
+
+typeDeclStmt: arrayType | typeStruct;
 
 result
 	: L_PAREN R_PAREN
-    | typeDecl
-    | L_PAREN (typeDecl (COMMA typeDecl)* COMMA?)? R_PAREN
+    | type_
+    | L_PAREN (type_ (COMMA type_)* COMMA?)? R_PAREN
     ;
 
-parameterDecl: IDENTIFIER COLON typeDecl;
+
+param: (AT IDENTIFIER)? MUT? IDENTIFIER COLON type_;
+
+paramList: param (COMMA param)*;
 
 // Function declarations
 methodDecl
-	:  (annotation EOS)? PUB? FN PAYABLE? IDENTIFIER L_PAREN (parameterDecl (COMMA parameterDecl)*)? R_PAREN (R_ARROW result)? block?
+	: (annotation)? PUB? PAYABLE? FN IDENTIFIER (L_PAREN (paramList)? R_PAREN)? (R_ARROW result)? block?
 	;
 
 basicLit
 	: integer
 	| string_
+	| BOOL_LIT
+	| ADDRESS_LIT
+	| ALPH_LIT
 	;
 
 integer
@@ -111,58 +109,47 @@ integer
 	| RUNE_LIT
     ;
 
-
-fieldDecl: LET? MUT? IDENTIFIER COLON typeDecl;
-
 string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
 
-typeStruct: typeStructHeader typeStructBody; 
+//fieldDecl: MUT? IDENTIFIER COLON typeDecl;
+//typeStruct: typeStructHeader typeStructBody;
 
-typeParam
-	: STRUCT
-	| ENUM
-	| INTERFACE
-	| TXSCRIPT
-	| TXCONTRACT
-	| CONTRACT
-	| ASSETSCRIPT
-	; 
+//typeParam
+//	: STRUCT
+//	| ENUM
+//	| INTERFACE
+//	| TXSCRIPT
+//	| TXCONTRACT
+//	| CONTRACT
+//	| ASSETSCRIPT
+//	;
 
-typeStructHeader
-	: typeParam IDENTIFIER ('<' (fieldDecl eos)* '>')? (L_PAREN (fieldDecl eos)* R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN (fieldDecl eos)* R_PAREN)?)?
-	;
+//typeStructHeader
+//	: typeParam IDENTIFIER (L_PAREN (paramList)? R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN (expressionList)? R_PAREN)?)?
+//	;
 
-typeStructBody
-	: L_CURLY ((fieldDecl | eventEmit | methodDecl) eos)* R_CURLY 
-	;
+typeStruct: txScript | contract | interface;
+
+typeStructBody: L_CURLY (statement | eventEmit | methodDecl)* R_CURLY;
+
+txScript: TXSCRIPT IDENTIFIER (L_PAREN (paramList)? R_PAREN)? typeStructBody;
+
+contract: (TXCONTRACT | CONTRACT) IDENTIFIER (L_PAREN (paramList)? R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN (expressionList)? R_PAREN)?)? typeStructBody;
+
+interface: INTERFACE IDENTIFIER typeStructBody;
 
 eventEmit
-	: EVENT IDENTIFIER (L_PAREN (fieldDecl eos)* R_PAREN)?
+	: EVENT IDENTIFIER (L_PAREN (paramList)? R_PAREN)?
 	| EVMIT IDENTIFIER (L_PAREN expressionList R_PAREN)?
 	;	
 
 
 //  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
 annotation
-    : (AT USING L_PAREN (assignParamList | expressionList) R_PAREN)?
+    : AT USING L_PAREN (expressionList) R_PAREN
     ;
 
-assignParamList
-    : assign (COMMA assign)*
-    ;
-
-assign
-    : IDENTIFIER ASSIGN expression
-    ;
-
-//type--------------------------------------------------------
-
-
-//stmt--------------------------------------------------------
-
-block: L_CURLY statementList? R_CURLY;
-
-statementList: ((SEMI? | EOS?) statement eos)+;
+block: L_CURLY (statement eos)* R_CURLY;
 
 statement:
 	declaration
@@ -178,32 +165,23 @@ statement:
 
 simpleStmt
 	: emptyStmt
+	| varDecl
 	| expressionStmt
 	| eventEmit
 	;
 
 expressionStmt: expression;
 
-emptyStmt: EOS | SEMI;
+emptyStmt: eos;
 
 returnStmt: RETURN expressionList?;
 
-// breakStmt: BREAK IDENTIFIER?;å
+// breakStmt: BREAK IDENTIFIER?;
 // continueStmt: CONTINUE IDENTIFIER?;
 // forStmt: FOR (expression?) block;
 
-ifStmt: IF (expression) block (ELSE (ifStmt | block))?;
+ifStmt: IF L_PAREN expression R_PAREN block (ELSE (block | ifStmt))?;
 
-whileStmt: WHILE (expression?) block;
+whileStmt: WHILE L_PAREN expression? R_PAREN block;
 
-//stmt--------------------------------------------------------
-
-
-//other--------------------------------------------------------
-eos:
-	SEMI
-	| EOF
-	| EOS
-	;
-
-//other--------------------------------------------------------
+eos: EOS;
