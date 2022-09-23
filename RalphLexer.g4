@@ -30,10 +30,6 @@ WHILE                  : 'while';
 // CASE                   : 'case';
 // TYPE                   : 'type';
 
-TRUE                   :'true';
-FALSE                  :'false';
-ALPH                   :'alph';
-
 LET                    : 'let';
 CONST                  : 'const';
 MUT                    : 'mut';
@@ -111,8 +107,8 @@ OCTAL_LIT              : '0' [oO]? ('_'? OCTAL_DIGIT)+;
 HEX_LIT                : '0' [xX]  ('_'? HEX_DIGIT)+;
 
 ADDRESS_LIT            : '#' LETTER*;
-ALPH_LIT               : DIGIT* ' '? ALPH;
-BOOL_LIT               : TRUE | FALSE;
+ALPH_LIT               : DIGIT* ' '? 'alph';
+BOOL_LIT               : 'true' | 'false';
 
 FLOAT_LIT : (DECIMAL_FLOAT_LIT | HEX_FLOAT_LIT);
 
