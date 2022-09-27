@@ -38,7 +38,7 @@ EXTENDS                :'extends';
 ABSTRACT               :'Abstract';
 IMPLEMENTS             :'implements';
 EVENT                  :'event';
-EVMIT                  :'emit';
+EMIT                  :'emit';
 
 //@using|using
 USING                  :'using';
@@ -185,11 +185,11 @@ fragment DIGIT
     ;
 
 // Whitespace and comments
-WS   : [ \t\n\r]+ -> skip ;
-COMMENT:            '/*' .*? '*/'    -> skip;
-LINE_COMMENT:       '//' ~[\r\n]*    -> skip;
-
+WS   : [ \t\n\r]+                    -> channel(HIDDEN);
+COMMENT:            '/*' .*? '*/'    -> channel(HIDDEN);
+LINE_COMMENT:       '//' ~[\r\n]*    -> channel(HIDDEN);
+TERMINATOR: [\r\n]+                  -> channel(HIDDEN);
 
 // Emit an EOS token for any newlines, semicolon, multiline comments or the EOF and
 //return to normal lexing
-EOS: ([\r\t\n]+ | ';' | '/*' .*? '*/' | EOF)  -> mode(DEFAULT_MODE);
+EOS: ([\r\t\n]+ | ';' | '/*' .*? '*/' | EOF);

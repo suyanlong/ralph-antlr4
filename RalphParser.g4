@@ -14,7 +14,10 @@ declaration: typeDeclStmt;
 
 identifierList: IDENTIFIER (COMMA IDENTIFIER)*;
 
-varDecl: (CONST | (LET MUT?)) ((IDENTIFIER ASSIGN expression) | (L_PAREN identifierList R_PAREN ASSIGN expression));
+varDecl: (CONST | (LET MUT?)) ((IDENTIFIER ASSIGN expression)
+         | (L_PAREN identifierList R_PAREN ASSIGN expression)
+         | IDENTIFIER ASSIGN IDENTIFIER L_PAREN expressionList? R_PAREN )
+         ;
 
 //expression
 expression:
@@ -83,7 +86,9 @@ result
     ;
 
 
-param: (AT IDENTIFIER)? MUT? IDENTIFIER COLON type_;
+paramAnnotation: AT IDENTIFIER;
+
+param: paramAnnotation? MUT? IDENTIFIER COLON type_;
 
 paramList: param (COMMA param)*;
 
@@ -95,9 +100,9 @@ methodDecl
 basicLit
 	: integer
 	| string_
-	| BOOL_LIT
 	| ADDRESS_LIT
 	| ALPH_LIT
+	| BOOL_LIT
 	;
 
 integer
@@ -130,7 +135,7 @@ string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
 
 typeStruct: txScript | contract | interface;
 
-typeStructBody: L_CURLY (statement | eventEmit | methodDecl)* R_CURLY;
+typeStructBody: L_CURLY (statement | event | emit | methodDecl)* R_CURLY;
 
 txScript: TXSCRIPT IDENTIFIER (L_PAREN (paramList)? R_PAREN)? typeStructBody;
 
@@ -138,10 +143,9 @@ contract: (TXCONTRACT | CONTRACT) IDENTIFIER (L_PAREN (paramList)? R_PAREN)? ((E
 
 interface: INTERFACE IDENTIFIER typeStructBody;
 
-eventEmit
-	: EVENT IDENTIFIER (L_PAREN (paramList)? R_PAREN)?
-	| EVMIT IDENTIFIER (L_PAREN expressionList R_PAREN)?
-	;	
+event: EVENT IDENTIFIER (L_PAREN (paramList)? R_PAREN)?;
+
+emit: EMIT IDENTIFIER (L_PAREN expressionList R_PAREN)?;
 
 
 //  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
@@ -149,7 +153,7 @@ annotation
     : AT USING L_PAREN (expressionList) R_PAREN
     ;
 
-block: L_CURLY (statement eos)* R_CURLY;
+block: L_CURLY (statement)* R_CURLY;
 
 statement:
 	declaration
@@ -167,7 +171,8 @@ simpleStmt
 	: emptyStmt
 	| varDecl
 	| expressionStmt
-	| eventEmit
+	| event
+	| emit
 	;
 
 expressionStmt: expression;
