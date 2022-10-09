@@ -5,25 +5,19 @@ options
    tokenVocab = RalphLexer;
 }
 
-sourceFile:  (importDecl)* (declaration)* EOF;
-
-
-importDecl: IMPORT string_;
-
-declaration: typeDeclStmt;
+sourceFile: (txScript | contract | interface)* EOF;
 
 identifierList: IDENTIFIER (COMMA IDENTIFIER)*;
 
-varDecl: (CONST | (LET MUT?)) ((IDENTIFIER ASSIGN expression)
-         | (L_PAREN identifierList R_PAREN ASSIGN expression)
-         | IDENTIFIER ASSIGN IDENTIFIER L_PAREN expressionList? R_PAREN )
-         ;
+varDecl
+    : (CONST | (LET MUT?)) ((IDENTIFIER ASSIGN expression) | (L_PAREN identifierList R_PAREN ASSIGN expression)) //# varDeclStmt
+    ;
 
 //expression
 expression:
 	primaryExpr
 	| IDENTIFIER
-	| methodCall
+	| call
 	| (SUB | NOT) expression
 	| expression (
         CONCAT
@@ -53,9 +47,11 @@ expression:
 	| expression ASSIGN expression
 	;
 
-expressionList: expression (COMMA expression)*;
+expressionList: (expression COMMA?)*;
 
-methodCall: IDENTIFIER (DOT IDENTIFIER)* L_PAREN expressionList? R_PAREN;
+call:
+    IDENTIFIER (DOT IDENTIFIER)* L_PAREN expressionList R_PAREN   // # callStmt
+    ;
 
 primaryExpr
 	: basicLit
@@ -69,32 +65,33 @@ primitiveType
     | U256
     | BYTEVEC
     | ADDRESS
+    | arrayType
     ;
 
-arrayType: L_BRACKET type_ SEMI expression R_BRACKET;
+arrayType
+    : L_BRACKET typeName SEMI expression R_BRACKET // # arrayTypeDeclStmt
+    ;
+
 arrayExpr: IDENTIFIER? L_BRACKET expression (COMMA expression)* R_BRACKET;
 
-
-type_: primitiveType | arrayType | IDENTIFIER ;
-
-typeDeclStmt: arrayType | typeStruct;
+typeName: primitiveType | IDENTIFIER ;
 
 result
 	: L_PAREN R_PAREN
-    | type_
-    | L_PAREN (type_ (COMMA type_)* COMMA?)? R_PAREN
+    | typeName
+    | L_PAREN (typeName (COMMA typeName)* COMMA?)? R_PAREN
     ;
 
 
-paramAnnotation: AT IDENTIFIER;
+paramAnnotation: AT 'unused';
 
-param: paramAnnotation? MUT? IDENTIFIER COLON type_;
+param: paramAnnotation? MUT? IDENTIFIER COLON typeName;
 
-paramList: param (COMMA param)*;
+paramList: (param COMMA?)*;
 
 // Function declarations
 methodDecl
-	: (annotation)? PUB? PAYABLE? FN IDENTIFIER (L_PAREN (paramList)? R_PAREN)? (R_ARROW result)? block?
+	: (annotation)? PUB? FN IDENTIFIER L_PAREN paramList R_PAREN (R_ARROW result)? block?
 	;
 
 basicLit
@@ -130,34 +127,41 @@ string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
 //	;
 
 //typeStructHeader
-//	: typeParam IDENTIFIER (L_PAREN (paramList)? R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN (expressionList)? R_PAREN)?)?
+//	: typeParam IDENTIFIER (L_PAREN (paramList)? R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN expressionList R_PAREN)?)?
 //	;
 
-typeStruct: txScript | contract | interface;
+//builtIn: IDENTIFIER | UNUSED;
 
-typeStructBody: L_CURLY (statement | event | emit | methodDecl)* R_CURLY;
+typeStructBody: L_CURLY (statement | event | methodDecl)* R_CURLY;
 
-txScript: TXSCRIPT IDENTIFIER (L_PAREN (paramList)? R_PAREN)? typeStructBody;
+txScript
+    : TXSCRIPT IDENTIFIER (L_PAREN paramList R_PAREN)? typeStructBody // # txScriptDeclStmt
+    ;
 
-contract: (TXCONTRACT | CONTRACT) IDENTIFIER (L_PAREN (paramList)? R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN (expressionList)? R_PAREN)?)? typeStructBody;
+contract
+    : CONTRACT IDENTIFIER (L_PAREN paramList R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN expressionList R_PAREN)?)? typeStructBody // # contractDeclStmt
+    ;
 
-interface: INTERFACE IDENTIFIER typeStructBody;
+interface
+    : INTERFACE IDENTIFIER typeStructBody // # interfaceDeclStmt
+    ;
 
-event: EVENT IDENTIFIER (L_PAREN (paramList)? R_PAREN)?;
+event: EVENT IDENTIFIER L_PAREN paramList R_PAREN;
 
-emit: EMIT IDENTIFIER (L_PAREN expressionList R_PAREN)?;
+emit
+    : EMIT IDENTIFIER L_PAREN expressionList R_PAREN  // # emitStmt
+    ;
 
 
 //  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
 annotation
-    : AT USING L_PAREN (expressionList) R_PAREN
+    : AT USING L_PAREN expressionList R_PAREN
     ;
 
 block: L_CURLY (statement)* R_CURLY;
 
 statement:
-	declaration
-	| simpleStmt
+	simpleStmt
 	| returnStmt
 	| block
 	| ifStmt
@@ -170,23 +174,22 @@ statement:
 simpleStmt
 	: emptyStmt
 	| varDecl
-	| expressionStmt
-	| event
+	| expression
 	| emit
 	;
 
-expressionStmt: expression;
-
 emptyStmt: eos;
 
-returnStmt: RETURN expressionList?;
+returnStmt: RETURN expressionList;
+
+ifStmt: IF L_PAREN expression R_PAREN block (ELSE (block | ifStmt))?;
+
+whileStmt
+    : WHILE L_PAREN expression? R_PAREN block
+    ;
 
 // breakStmt: BREAK IDENTIFIER?;
 // continueStmt: CONTINUE IDENTIFIER?;
 // forStmt: FOR (expression?) block;
-
-ifStmt: IF L_PAREN expression R_PAREN block (ELSE (block | ifStmt))?;
-
-whileStmt: WHILE L_PAREN expression? R_PAREN block;
 
 eos: EOS;
