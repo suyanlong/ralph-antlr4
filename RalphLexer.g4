@@ -2,33 +2,22 @@ lexer grammar RalphLexer;
 
 // LEXER
 // src/main/scala/org/alephium/protocol/vm/lang/Lexer.scala
-// Keywords
-// IMPORT                 : 'import';
-// PACKAGE                : 'package';
-// PAYABLE                : 'payable';
 FN                     : 'fn';
 PUB                    : 'pub';
 RETURN                 : 'return' ;
 
 INTERFACE              : 'Interface';
-STRUCT                 : 'struct';
 ENUM                   : 'enum';
 TXSCRIPT               : 'TxScript';
-TXCONTRACT             : 'TxContract';
 CONTRACT               : 'Contract';
 ASSETSCRIPT            : 'AssetScript';
 
 IF                     : 'if';
 ELSE                   : 'else';
 WHILE                  : 'while';
-// FOR                    : 'for';
+FOR                    : 'for';
 // BREAK                  : 'break';
 // CONTINUE               : 'continue';
-// DEFAULT                : 'default';
-// GOTO                   : 'goto';
-// SWITCH                 : 'switch';
-// CASE                   : 'case';
-// TYPE                   : 'type';
 
 LET                    : 'let';
 CONST                  : 'const';
@@ -41,6 +30,7 @@ EVENT                  :'event';
 EMIT                   :'emit';
 
 //@using|using
+ATUSING                :'@using';
 USING                  :'using';
 AT                     :'@';
 BOOL                   :'Bool';
@@ -50,6 +40,7 @@ BYTE                   :'Byte';
 BYTEVEC                :'ByteVec';
 ADDRESS                :'Address';
 
+ATUNUSED               :'@unused';
 UNUSED                 :'unused';
 
 //->
@@ -100,8 +91,10 @@ AND                    : '&&';
 OR                     : '||';
 NOT                    : '!';
 
-ADDRESS_LIT            : '#' LETTER*;
-ALPH_LIT               : DIGIT* ' '? 'alph';
+ALPH                   : 'alph';
+
+ADDRESS_LIT            : '#' (DIGIT | LETTER)*;
+ALPH_LIT               : DIGIT+ [ ]+ ALPH;
 BOOL_LIT               : 'true' | 'false';
 
 //TODO

@@ -5,19 +5,27 @@ options
    tokenVocab = RalphLexer;
 }
 
-sourceFile: (txScript | contract | interface)* EOF;
+sourceFile: (txScript | contract | interface | assetScript)* EOF;
 
-identifierList: IDENTIFIER (COMMA IDENTIFIER)*;
+identifierList: varName (COMMA varName)*;
+
+varDeclSingle: (CONST | (LET MUT?)) varName ASSIGN expression;
+
+varDeclMulti: (CONST | (LET MUT?)) L_PAREN identifierList R_PAREN ASSIGN expression;
 
 varDecl
-    : (CONST | (LET MUT?)) ((IDENTIFIER ASSIGN expression) | (L_PAREN identifierList R_PAREN ASSIGN expression)) //# varDeclStmt
+    : varDeclSingle
+    | varDeclMulti //# varDeclStmt
     ;
+
+varName: IDENTIFIER;
 
 //expression
 expression:
 	primaryExpr
-	| IDENTIFIER
-	| call
+	| callChain
+	| ifStmt
+	| L_PAREN expression R_PAREN
 	| (SUB | NOT) expression
 	| expression (
         CONCAT
@@ -49,9 +57,14 @@ expression:
 
 expressionList: (expression COMMA?)*;
 
-call:
-    IDENTIFIER (DOT IDENTIFIER)* L_PAREN expressionList R_PAREN   // # callStmt
-    ;
+callChain: (varName | methodCall) (DOT callChain)*;
+
+methodCall: IDENTIFIER aps? L_PAREN expressionList R_PAREN;
+
+apsAlph: expression R_ARROW expression;
+apsToken: apsAlph COLON expression;
+apsBoth: apsAlph COMMA expression COLON expression;
+aps: L_CURLY (apsAlph | apsToken | apsBoth) R_CURLY;
 
 primaryExpr
 	: basicLit
@@ -82,10 +95,7 @@ result
     | L_PAREN (typeName (COMMA typeName)* COMMA?)? R_PAREN
     ;
 
-
-paramAnnotation: AT 'unused';
-
-param: paramAnnotation? MUT? IDENTIFIER COLON typeName;
+param: ATUNUSED? MUT? IDENTIFIER COLON typeName;
 
 paramList: (param COMMA?)*;
 
@@ -113,37 +123,36 @@ integer
 
 string_: RAW_STRING_LIT | INTERPRETED_STRING_LIT;
 
-//fieldDecl: MUT? IDENTIFIER COLON typeDecl;
-//typeStruct: typeStructHeader typeStructBody;
+varNameAssign: varName ASSIGN basicLit;
 
-//typeParam
-//	: STRUCT
-//	| ENUM
-//	| INTERFACE
-//	| TXSCRIPT
-//	| TXCONTRACT
-//	| CONTRACT
-//	| ASSETSCRIPT
-//	;
+enum: ENUM IDENTIFIER L_CURLY varNameAssign* R_CURLY;
 
-//typeStructHeader
-//	: typeParam IDENTIFIER (L_PAREN (paramList)? R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN expressionList R_PAREN)?)?
-//	;
-
-//builtIn: IDENTIFIER | UNUSED;
-
-typeStructBody: L_CURLY (statement | event | methodDecl)* R_CURLY;
+typeStructBody: L_CURLY (statement | event | methodDecl | enum)* R_CURLY;
 
 txScript
     : TXSCRIPT IDENTIFIER (L_PAREN paramList R_PAREN)? typeStructBody // # txScriptDeclStmt
     ;
 
+assetScript
+    : ASSETSCRIPT IDENTIFIER (L_PAREN paramList R_PAREN)? typeStructBody
+    ;
+
 contract
-    : CONTRACT IDENTIFIER (L_PAREN paramList R_PAREN)? ((EXTENDS | IMPLEMENTS) IDENTIFIER (L_PAREN expressionList R_PAREN)?)? typeStructBody // # contractDeclStmt
+    : ABSTRACT? CONTRACT IDENTIFIER (L_PAREN paramList R_PAREN)? extends? implements? typeStructBody // # contractDeclStmt
+    ;
+
+extends
+    : EXTENDS contractExtends (COMMA contractExtends)*
+    ;
+
+contractExtends: IDENTIFIER L_PAREN expressionList R_PAREN;
+
+implements
+    : IMPLEMENTS IDENTIFIER
     ;
 
 interface
-    : INTERFACE IDENTIFIER typeStructBody // # interfaceDeclStmt
+    : INTERFACE IDENTIFIER (EXTENDS IDENTIFIER)? typeStructBody // # interfaceDeclStmt
     ;
 
 event: EVENT IDENTIFIER L_PAREN paramList R_PAREN;
@@ -152,27 +161,26 @@ emit
     : EMIT IDENTIFIER L_PAREN expressionList R_PAREN  // # emitStmt
     ;
 
-
 //  [@using(preapprovedAssets = <Bool>, assetsInContract = <Bool>)]
 annotation
-    : AT USING L_PAREN expressionList R_PAREN
+    : ATUSING L_PAREN expressionList R_PAREN
     ;
 
-block: L_CURLY (statement)* R_CURLY;
+block
+    : L_CURLY (statement)* R_CURLY
+    | statement
+    ;
 
 statement:
 	simpleStmt
-	| returnStmt
-	| block
 	| ifStmt
 	| whileStmt
-	// | breakStmt
-	// | continueStmt
-	// | forStmt
+    | forStmt
 	;
 
 simpleStmt
 	: emptyStmt
+    | returnStmt
 	| varDecl
 	| expression
 	| emit
@@ -182,14 +190,14 @@ emptyStmt: eos;
 
 returnStmt: RETURN expressionList;
 
-ifStmt: IF L_PAREN expression R_PAREN block (ELSE (block | ifStmt))?;
+ifStmt: IF L_PAREN expression R_PAREN block elseStmt?;
+
+elseStmt: ELSE (block | ifStmt);
 
 whileStmt
     : WHILE L_PAREN expression? R_PAREN block
     ;
 
-// breakStmt: BREAK IDENTIFIER?;
-// continueStmt: CONTINUE IDENTIFIER?;
-// forStmt: FOR (expression?) block;
+forStmt: FOR L_PAREN LET MUT varName ASSIGN expression SEMI expression SEMI expression R_PAREN block;
 
 eos: EOS;
